@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Modal } from "./Modal";
 import { cn } from "../lib/utils";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebase";
 import { CheckCircle2, ArrowRight, Download, Calendar, Users, Briefcase } from "lucide-react";
 
 export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
@@ -18,11 +16,10 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "registrations"), {
-        email,
-        type,
-        timestamp: serverTimestamp(),
-      });
+      // TODO: Replace with Supabase later
+      console.log("Registration submitted:", { email, type });
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
       setSubmitted(true);
     } catch (error) {
       console.error("Error registering:", error);
