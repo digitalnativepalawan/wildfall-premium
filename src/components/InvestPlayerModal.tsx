@@ -20,22 +20,31 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
   // Fetch event data from Supabase
   useEffect(() => {
     const fetchEventData = async () => {
-      const { data } = await supabase
-        .from('event_data')
-        .select('*');
-      
-      if (data) {
-        const map: Record<string, string> = {};
-        data.forEach(item => {
-          map[item.key] = item.value;
-        });
+      try {
+        const { data, error } = await supabase
+          .from('event_data')
+          .select('*');
         
-        setEventData({
-          nextEventDate: map.next_event_date || "May 22-24, 2026",
-          slotsRemaining: parseInt(map.slots_remaining) || 14,
-          maxSlots: parseInt(map.max_slots) || 60,
-          nextSiteVisit: map.next_site_visit || "April 15-17, 2026",
-        });
+        if (error) {
+          console.error("Error fetching event data:", error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const map: Record<string, string> = {};
+          data.forEach(item => {
+            map[item.key] = item.value;
+          });
+          
+          setEventData({
+            nextEventDate: map.next_event_date || "May 22-24, 2026",
+            slotsRemaining: parseInt(map.slots_remaining) || 14,
+            maxSlots: parseInt(map.max_slots) || 60,
+            nextSiteVisit: map.next_site_visit || "April 15-17, 2026",
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch event data:", err);
       }
     };
 
@@ -46,20 +55,31 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !type) return;
+    if (!email || !type) {
+      alert("Please select a type and enter your email");
+      return;
+    }
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('registrations')
-        .insert([{ email, type }]);
-
-      if (error) throw error;
+      console.log("Submitting:", { email, type });
       
+      const { data, error } = await supabase
+        .from('registrations')
+        .insert([{ email, type }])
+        .select();
+
+      if (error) {
+        console.error("Supabase error details:", error);
+        alert(`Registration failed: ${error.message}`);
+        return;
+      }
+      
+      console.log("Success:", data);
       setSubmitted(true);
     } catch (error) {
-      console.error("Error registering:", error);
-      alert("Registration failed. Please try again.");
+      console.error("Caught error:", error);
+      alert(`Registration failed: ${error}`);
     } finally {
       setLoading(false);
     }
