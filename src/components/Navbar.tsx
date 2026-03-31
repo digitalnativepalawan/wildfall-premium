@@ -1,26 +1,29 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Menu, X, Shield, Users, Map, Sword, UserCircle, Settings } from "lucide-react";
+import { Menu, X, Shield, Settings } from "lucide-react";
 import { cn } from "../lib/utils";
-import { auth, signIn, logOut } from "../firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+
+// TODO: Replace with Supabase auth later
+const user = null;
+const isAdmin = false;
+
+const signIn = () => {
+  alert("Login with Supabase coming soon");
+};
+
+const logOut = () => {
+  alert("Logout coming soon");
+};
 
 export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      unsubscribe();
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const isAdmin = user?.email === "growpalawan@gmail.com";
 
   const navLinks = [
     { name: "EXPERIENCE", href: "#experience" },
@@ -71,7 +74,6 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
                 onClick={logOut}
                 className="flex items-center gap-2 text-xs font-mono text-white/60 hover:text-white transition-colors"
               >
-                <UserCircle className="w-5 h-5" />
                 <span>LOGOUT</span>
               </button>
             ) : (
@@ -117,8 +119,8 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
                 </button>
               )}
               {user ? (
-                <button onClick={logOut} className="text-white/60 flex items-center gap-2">
-                  <UserCircle className="w-5 h-5" /> LOGOUT
+                <button onClick={logOut} className="text-white/60">
+                  LOGOUT
                 </button>
               ) : (
                 <button onClick={signIn} className="text-gold">LOGIN</button>
