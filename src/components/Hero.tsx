@@ -1,6 +1,5 @@
 import { motion } from "motion/react";
 import { Shield, ChevronDown } from "lucide-react";
-import { cn } from "../lib/utils";
 
 export function Hero() {
   return (
@@ -23,37 +22,25 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        <motion.h1
+        {/* Your Image - Replace the text */}
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="text-6xl sm:text-7xl md:text-8xl lg:text-[12rem] font-serif leading-none tracking-tighter gold-gradient-text mb-4"
+          className="mb-8"
         >
-          WILDFALL
-        </motion.h1>
+          <img 
+            src="/images/hero-logo.png" 
+            alt="Wildfall: No Man's Jungle"
+            className="w-full max-w-3xl mx-auto"
+          />
+        </motion.div>
 
-        <motion.h2
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="text-lg md:text-xl lg:text-3xl font-serif italic text-gold/80 mb-12"
-        >
-          No Man's Jungle
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.8 }}
-          className="max-w-2xl mx-auto text-base md:text-lg lg:text-xl text-white/60 font-serif italic mb-16 px-4"
-        >
-          "This is not a match. This is not a game you 'play and forget.'"
-        </motion.p>
-
+        {/* Keep the stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.1 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
           className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 lg:gap-24 items-center justify-center mb-20 px-2"
         >
           {[
@@ -71,7 +58,7 @@ export function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.5 }}
+          transition={{ duration: 1, delay: 1.2 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20"
         >
           <span className="text-[10px] font-mono tracking-widest">SCROLL TO DEPLOY</span>
