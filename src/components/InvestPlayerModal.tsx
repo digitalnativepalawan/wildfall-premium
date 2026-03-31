@@ -4,111 +4,238 @@ import { cn } from "../lib/utils";
 import { CheckCircle2, ArrowRight, Download, Calendar, Users, Briefcase, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-// Investor Packet Modal Component
+// Investor Packet Modal Component - Full Prospectus
 function InvestorPacketModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="INVESTOR PACKET — WILDFALL">
-      <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-        <div className="text-center">
-          <h3 className="text-2xl font-serif text-gold mb-2">WILDFALL</h3>
-          <p className="text-xs text-white/40">No Man's Jungle</p>
-          <div className="w-12 h-px bg-gold mx-auto my-4" />
+    <Modal isOpen={isOpen} onClose={onClose} title="INVESTOR PROSPECTUS — WILDFALL">
+      <div className="max-h-[75vh] overflow-y-auto pr-2 space-y-8">
+        
+        {/* Cover Section */}
+        <div className="text-center py-8">
+          <h1 className="text-5xl font-serif gold-gradient-text tracking-wider">WILDFALL</h1>
+          <p className="text-gold text-sm tracking-[4px] mt-2">NO MAN'S JUNGLE</p>
+          <div className="w-16 h-px bg-gold mx-auto my-6" />
+          <p className="text-xs text-white/40 tracking-[4px]">INVESTOR PROSPECTUS</p>
+          <p className="text-3xl font-serif text-gold mt-8">60 Hectares</p>
+          <p className="text-3xl font-serif text-gold mt-2">60 Players</p>
+          <p className="text-3xl font-serif text-gold mt-2">₱15M+ Annual Profit</p>
+          <p className="text-xs text-white/30 mt-8">April 2026 • San Vicente, Palawan</p>
+          <div className="border-t border-gold/20 mt-8 pt-4">
+            <p className="text-[10px] text-white/20">CONFIDENTIAL — FOR QUALIFIED INVESTORS ONLY</p>
+          </div>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-white/5 border border-white/10">
-            <div className="text-2xl font-mono text-gold">60</div>
-            <div className="text-[9px] text-white/40">HECTARES</div>
+        {/* Executive Summary */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Executive Summary</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="bg-white/5 border border-gold/20 p-3 text-center rounded">
+              <div className="text-2xl font-mono text-gold">60</div>
+              <div className="text-[9px] text-white/40">HECTARES</div>
+            </div>
+            <div className="bg-white/5 border border-gold/20 p-3 text-center rounded">
+              <div className="text-2xl font-mono text-gold">60</div>
+              <div className="text-[9px] text-white/40">PLAYERS</div>
+            </div>
+            <div className="bg-white/5 border border-gold/20 p-3 text-center rounded">
+              <div className="text-2xl font-mono text-gold">2</div>
+              <div className="text-[9px] text-white/40">DAYS</div>
+            </div>
+            <div className="bg-white/5 border border-gold/20 p-3 text-center rounded">
+              <div className="text-2xl font-mono text-gold">1</div>
+              <div className="text-[9px] text-white/40">NIGHT</div>
+            </div>
           </div>
-          <div className="text-center p-3 bg-white/5 border border-white/10">
-            <div className="text-2xl font-mono text-gold">60</div>
-            <div className="text-[9px] text-white/40">PLAYERS</div>
+          <p className="text-sm text-white/60 leading-relaxed">Wildfall: No Man's Jungle is a full-scale, live war simulation set in a 60-hectare tropical battlefield in San Vicente, Palawan. With no direct competitors in the region, this premium immersive experience targets adventure tourists, corporate team-building, and military enthusiasts.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <h3 className="text-gold font-mono text-xs mb-3">KEY HIGHLIGHTS</h3>
+              <ul className="text-xs text-white/60 space-y-2 list-disc list-inside">
+                <li>First-of-its-kind in Palawan</li>
+                <li>64% profit margin per event</li>
+                <li>3-month break-even</li>
+                <li>₱15.5M Year 1 profit</li>
+                <li>396% ROI in first year</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-gold font-mono text-xs mb-3">THE OPPORTUNITY</h3>
+              <ul className="text-xs text-white/60 space-y-2 list-disc list-inside">
+                <li>No direct competition</li>
+                <li>Growing adventure tourism market</li>
+                <li>Corporate team-building demand</li>
+                <li>Military/law enforcement training</li>
+                <li>Sponsorship revenue potential ₱3.1M/year</li>
+              </ul>
+            </div>
           </div>
-          <div className="text-center p-3 bg-white/5 border border-white/10">
-            <div className="text-2xl font-mono text-gold">2D/1N</div>
-            <div className="text-[9px] text-white/40">DURATION</div>
-          </div>
+        </div>
+
+        {/* The Vision */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">The Vision</h2>
+          <p className="text-sm italic text-gold/80 mb-4">"This is not a match. This is not a game you play and forget."</p>
+          <p className="text-sm text-white/60 leading-relaxed">Wildfall is a 48-hour immersive simulation that pushes the boundaries of tactical engagement. Participants are deployed into a living, breathing war zone where control is unstable, information is incomplete, and every decision carries weight.</p>
         </div>
 
         {/* Financial Summary */}
         <div>
-          <h4 className="text-gold font-mono text-xs tracking-widest mb-3">FINANCIAL SUMMARY</h4>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Financial Summary</h2>
           <div className="space-y-2">
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Development CAPEX</span>
+              <span className="text-sm text-white/60">Development CAPEX</span>
               <span className="text-gold font-mono">₱3.58M</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Profit per Event</span>
+              <span className="text-sm text-white/60">Profit per Event</span>
               <span className="text-gold font-mono">₱322K</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Break-Even</span>
+              <span className="text-sm text-white/60">Break-Even</span>
               <span className="text-gold font-mono">12 events / 3 months</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Year 1 Profit</span>
+              <span className="text-sm text-white/60">Year 1 Profit</span>
               <span className="text-gold font-mono">₱15.5M</span>
             </div>
             <div className="flex justify-between py-2">
-              <span className="text-sm">ROI Year 1</span>
+              <span className="text-sm text-white/60">ROI Year 1</span>
               <span className="text-gold font-mono">396%</span>
             </div>
           </div>
         </div>
 
-        {/* Sponsorship */}
+        {/* Development CAPEX */}
         <div>
-          <h4 className="text-gold font-mono text-xs tracking-widest mb-3">SPONSORSHIP POTENTIAL</h4>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Development CAPEX — ₱3.58M</h2>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Terrain Preparation</span><span className="text-gold">₱260,000</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Las Sombras Village</span><span className="text-gold">₱700,000</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Base Camps (3)</span><span className="text-gold">₱390,000</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Outposts (3)</span><span className="text-gold">₱450,000</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Weapons & Equipment</span><span className="text-gold">₱700,000</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Tech System</span><span className="text-gold">₱280,000</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">Setup & Buffer</span><span className="text-gold">₱800,000</span></div>
+          </div>
+        </div>
+
+        {/* Revenue & Profit */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Revenue Per Event (60 Players)</h2>
           <div className="space-y-2">
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">San Miguel Brewery</span>
-              <span className="text-gold font-mono">₱500K/year</span>
+              <span className="text-sm text-white/60">Ticket Sales (60 × ₱7,500)</span>
+              <span className="text-gold font-mono">₱450,000</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Tanduay Rum</span>
-              <span className="text-gold font-mono">₱250K/year</span>
+              <span className="text-sm text-white/60">Bar Revenue (La Tregua)</span>
+              <span className="text-gold font-mono">₱36,000</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Local Restaurant</span>
-              <span className="text-gold font-mono">₱150K/year</span>
+              <span className="text-sm text-white/60">Merchandise & Photos</span>
+              <span className="text-gold font-mono">₱16,000</span>
+            </div>
+            <div className="flex justify-between py-2 border-t border-gold/30 pt-2">
+              <span className="text-sm text-white font-bold">TOTAL REVENUE</span>
+              <span className="text-gold font-mono font-bold">₱502,000</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Profit Summary */}
+        <div className="bg-gold/5 p-4 border border-gold/20 rounded">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-white">Operational Cost</span>
+            <span className="text-white/60">-₱180,000</span>
+          </div>
+          <div className="flex justify-between items-center mt-2 pt-2 border-t border-gold/20">
+            <span className="text-base text-white font-bold">NET PROFIT PER EVENT</span>
+            <span className="text-gold font-mono font-bold text-xl">₱322,000</span>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-white/60">Profit Margin</span>
+            <span className="text-gold text-xs">64%</span>
+          </div>
+        </div>
+
+        {/* Sponsorship */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Sponsorship Potential</h2>
+          <div className="space-y-2">
+            <div className="flex justify-between py-2 border-b border-white/10">
+              <span className="text-sm text-white/60">San Miguel Brewery</span>
+              <span className="text-gold">₱500K/year</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-white/10">
+              <span className="text-sm text-white/60">Tanduay Rum</span>
+              <span className="text-gold">₱250K/year</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-white/10">
+              <span className="text-sm text-white/60">Local Restaurant</span>
+              <span className="text-gold">₱150K/year</span>
             </div>
             <div className="flex justify-between py-2">
-              <span className="text-sm">Total Sponsorship</span>
-              <span className="text-gold font-mono">₱3.1M/year</span>
+              <span className="text-sm text-white/60">Total Sponsorship</span>
+              <span className="text-gold font-bold">₱3.1M/year</span>
             </div>
           </div>
         </div>
 
         {/* Investor Tiers */}
         <div>
-          <h4 className="text-gold font-mono text-xs tracking-widest mb-3">INVESTOR TIERS</h4>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Investor Tiers</h2>
           <div className="space-y-2">
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Seed</span>
-              <span className="text-gold font-mono">₱500K (5%)</span>
+              <span className="text-sm text-white/60">Seed</span>
+              <span className="text-gold">₱500K (5%)</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Angel</span>
-              <span className="text-gold font-mono">₱1M (10%)</span>
+              <span className="text-sm text-white/60">Angel</span>
+              <span className="text-gold">₱1M (10%)</span>
             </div>
             <div className="flex justify-between py-2 border-b border-white/10">
-              <span className="text-sm">Partner</span>
-              <span className="text-gold font-mono">₱2M (20%)</span>
+              <span className="text-sm text-white/60">Partner</span>
+              <span className="text-gold">₱2M (20%)</span>
             </div>
             <div className="flex justify-between py-2">
-              <span className="text-sm">Lead</span>
-              <span className="text-gold font-mono">₱3.58M (35.8%)</span>
+              <span className="text-sm text-white/60">Lead</span>
+              <span className="text-gold font-bold">₱3.58M (35.8%)</span>
             </div>
           </div>
         </div>
 
+        {/* Competitive Advantage */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Competitive Advantage</h2>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Duration</span><span className="text-gold">2 days/1 night</span><span className="text-white/40">vs 2-4 hours</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Terrain</span><span className="text-gold">60 hectares</span><span className="text-white/40">vs 1-5 hectares</span></div>
+            <div className="flex justify-between py-1 border-b border-white/5"><span className="text-white/60">Players</span><span className="text-gold">60</span><span className="text-white/40">vs 10-20</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">NPCs</span><span className="text-gold">8 live actors</span><span className="text-white/40">vs None</span></div>
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div>
+          <h2 className="text-xl font-serif text-gold border-l-4 border-gold pl-4 mb-4">Timeline to Launch</h2>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between py-1"><span className="text-white/60">Month 1-2</span><span className="text-white/80">Terrain preparation</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">Month 2-3</span><span className="text-white/80">Construction</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">Month 3-4</span><span className="text-white/80">Equipment & tech</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">Month 4</span><span className="text-white/80">Staff hiring & training</span></div>
+            <div className="flex justify-between py-1"><span className="text-white/60">Month 5</span><span className="text-white/80">Beta test</span></div>
+            <div className="flex justify-between py-1"><span className="text-gold">Month 6</span><span className="text-gold">GRAND OPENING</span></div>
+          </div>
+        </div>
+
         {/* Contact */}
-        <div className="bg-white/5 p-4 text-center mt-4">
-          <p className="text-xs text-white/40">For more information</p>
-          <p className="text-gold text-sm font-mono mt-1">investors@wildfall.com</p>
-          <p className="text-xs text-white/40 mt-2">San Vicente, Palawan</p>
+        <div className="bg-gold/10 p-6 text-center border border-gold/30 rounded mt-4">
+          <p className="text-xs text-white/60">Ready to Deploy?</p>
+          <p className="text-gold font-mono text-sm mt-2">investors@wildfall.com</p>
+          <p className="text-xs text-white/40 mt-3">San Vicente, Palawan</p>
+          <div className="border-t border-gold/20 mt-4 pt-4">
+            <p className="text-[10px] text-white/30 italic">The war is waiting. The jungle is watching.</p>
+          </div>
         </div>
       </div>
     </Modal>
