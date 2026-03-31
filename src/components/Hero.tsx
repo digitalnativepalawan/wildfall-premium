@@ -27,7 +27,7 @@ export function Hero() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="text-8xl md:text-[12rem] font-serif leading-none tracking-tighter gold-gradient-text mb-4"
+          className="text-6xl sm:text-7xl md:text-8xl lg:text-[12rem] font-serif leading-none tracking-tighter gold-gradient-text mb-4"
         >
           WILDFALL
         </motion.h1>
@@ -36,7 +36,7 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
-          className="text-xl md:text-3xl font-serif italic text-gold/80 mb-12"
+          className="text-lg md:text-xl lg:text-3xl font-serif italic text-gold/80 mb-12"
         >
           No Man's Jungle
         </motion.h2>
@@ -45,7 +45,7 @@ export function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.8 }}
-          className="max-w-2xl mx-auto text-lg md:text-xl text-white/60 font-serif italic mb-16"
+          className="max-w-2xl mx-auto text-base md:text-lg lg:text-xl text-white/60 font-serif italic mb-16 px-4"
         >
           "This is not a match. This is not a game you 'play and forget.'"
         </motion.p>
@@ -54,7 +54,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.1 }}
-          className="grid grid-cols-3 gap-8 md:gap-24 items-center justify-center mb-20"
+          className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 lg:gap-24 items-center justify-center mb-20 px-2"
         >
           {[
             { label: "DAYS", value: "2" },
@@ -62,8 +62,8 @@ export function Hero() {
             { label: "HECTARES", value: "60" },
           ].map((stat) => (
             <div key={stat.label} className="flex flex-col items-center">
-              <span className="text-4xl md:text-6xl font-mono text-gold mb-2">{stat.value}</span>
-              <span className="text-[10px] font-mono tracking-widest text-white/40">{stat.label}</span>
+              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono text-gold mb-2">{stat.value}</span>
+              <span className="text-[10px] font-mono tracking-widest text-white/40 whitespace-nowrap">{stat.label}</span>
             </div>
           ))}
         </motion.div>
