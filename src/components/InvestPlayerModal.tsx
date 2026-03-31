@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "./Modal";
 import { cn } from "../lib/utils";
 import { CheckCircle2, ArrowRight, Download, Calendar, Users, Briefcase } from "lucide-react";
+import { supabase } from "../lib/supabase";
 
 export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [step, setStep] = useState(1);
@@ -9,6 +10,39 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [eventData, setEventData] = useState({
+    nextEventDate: "May 22-24, 2026",
+    slotsRemaining: 14,
+    maxSlots: 60,
+    nextSiteVisit: "April 15-17, 2026",
+  });
+
+  // Fetch event data from Supabase
+  useEffect(() => {
+    const fetchEventData = async () => {
+      const { data } = await supabase
+        .from('event_data')
+        .select('*');
+      
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach(item => {
+          map[item.key] = item.value;
+        });
+        
+        setEventData({
+          nextEventDate: map.next_event_date || "May 22-24, 2026",
+          slotsRemaining: parseInt(map.slots_remaining) || 14,
+          maxSlots: parseInt(map.max_slots) || 60,
+          nextSiteVisit: map.next_site_visit || "April 15-17, 2026",
+        });
+      }
+    };
+
+    if (isOpen) {
+      fetchEventData();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,13 +50,16 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
 
     setLoading(true);
     try {
-      // TODO: Replace with Supabase later
-      console.log("Registration submitted:", { email, type });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const { error } = await supabase
+        .from('registrations')
+        .insert([{ email, type }]);
+
+      if (error) throw error;
+      
       setSubmitted(true);
     } catch (error) {
       console.error("Error registering:", error);
+      alert("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -102,7 +139,7 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
                   <Calendar className="w-6 h-6 text-gold" />
                   <div>
                     <div className="text-[10px] font-mono text-white/40 tracking-widest uppercase">Next Site Visit</div>
-                    <div className="text-sm font-serif italic">April 15-17, 2026 • San Vicente</div>
+                    <div className="text-sm font-serif italic">{eventData.nextSiteVisit} • San Vicente</div>
                   </div>
                 </div>
               </>
@@ -112,14 +149,14 @@ export function InvestPlayerModal({ isOpen, onClose }: { isOpen: boolean, onClos
                   <Calendar className="w-6 h-6 text-gold" />
                   <div>
                     <div className="text-[10px] font-mono text-white/40 tracking-widest uppercase">Next Event Date</div>
-                    <div className="text-sm font-serif italic">May 22-24, 2026</div>
+                    <div className="text-sm font-serif italic">{eventData.nextEventDate}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-white/5 border border-white/10">
                   <Users className="w-6 h-6 text-gold" />
                   <div>
                     <div className="text-[10px] font-mono text-white/40 tracking-widest uppercase">Slots Remaining</div>
-                    <div className="text-sm font-serif italic">14 / 60 Operatives</div>
+                    <div className="text-sm font-serif italic">{eventData.slotsRemaining} / {eventData.maxSlots} Operatives</div>
                   </div>
                 </div>
               </>
