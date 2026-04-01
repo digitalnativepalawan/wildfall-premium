@@ -22,7 +22,7 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        {/* Your Image from Google Drive */}
+        {/* Your Custom Image */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -35,23 +35,25 @@ export function Hero() {
           />
         </motion.div>
 
-        {/* Stats */}
+        {/* Stats - Keep these */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 lg:gap-24 items-center justify-center mt-12 mb-20 px-2"
         >
-          {[
-            { label: "DAYS", value: "2" },
-            { label: "NIGHT", value: "1" },
-            { label: "HECTARES", value: "60" },
-          ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center">
-              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono text-gold mb-2">{stat.value}</span>
-              <span className="text-[10px] font-mono tracking-widest text-white/40 whitespace-nowrap">{stat.label}</span>
-            </div>
-          ))}
+          <div className="flex flex-col items-center">
+            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono text-gold mb-2">2</span>
+            <span className="text-[10px] font-mono tracking-widest text-white/40">DAYS</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono text-gold mb-2">1</span>
+            <span className="text-[10px] font-mono tracking-widest text-white/40">NIGHT</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-mono text-gold mb-2">60</span>
+            <span className="text-[10px] font-mono tracking-widest text-white/40">HECTARES</span>
+          </div>
         </motion.div>
 
         <motion.div
@@ -65,7 +67,6 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Jungle Silhouette */}
       <div className="absolute bottom-0 left-0 right-0 h-64 jungle-silhouette z-0 pointer-events-none" />
     </section>
   );
