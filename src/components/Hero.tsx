@@ -22,26 +22,25 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        {/* Your Image - Replace the text */}
+        {/* Your Image from Google Drive */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="mb-8"
         >
           <img 
-            src="/images/hero-logo.png" 
+            src="https://drive.google.com/uc?export=view&id=1Gj3G4B9zRxN5vz_45FQaRG5nX9QkCERC"
             alt="Wildfall: No Man's Jungle"
             className="w-full max-w-3xl mx-auto"
           />
         </motion.div>
 
-        {/* Keep the stats */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 lg:gap-24 items-center justify-center mb-20 px-2"
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="grid grid-cols-3 gap-4 sm:gap-8 md:gap-16 lg:gap-24 items-center justify-center mt-12 mb-20 px-2"
         >
           {[
             { label: "DAYS", value: "2" },
@@ -58,7 +57,7 @@ export function Hero() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 1.2 }}
+          transition={{ duration: 1, delay: 1 }}
           className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20"
         >
           <span className="text-[10px] font-mono tracking-widest">SCROLL TO DEPLOY</span>
