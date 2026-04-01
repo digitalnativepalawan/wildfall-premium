@@ -22,20 +22,20 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        {/* Your Custom Image */}
+        {/* YOUR CUSTOM IMAGE - THIS IS THE IMPORTANT PART */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
         >
           <img 
-            src="https://drive.google.com/uc?export=view&id=1Gj3G4B9zRxN5vz_45FQaRG5nX9QkCERC"
+            src="https://pxbdwprvruhcvzcrsxgu.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-04-01%20at%207.06.34%20AM.jpeg"
             alt="Wildfall: No Man's Jungle"
             className="w-full max-w-3xl mx-auto"
           />
         </motion.div>
 
-        {/* Stats - Keep these */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
