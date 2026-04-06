@@ -6,7 +6,7 @@ export function Hero() {
     <section className="relative min-h-screen flex flex-col items-center justify-center pt-20 overflow-hidden bg-black">
       {/* Background Elements - DARK BLACK BASE */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-black" /> {/* SOLID BLACK BASE */}
+        <div className="absolute inset-0 bg-black" />
         <div className="absolute inset-0 bg-radial-gradient from-gold/5 via-black to-black opacity-30" />
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gold/5 rounded-full blur-[120px]" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gold/5 rounded-full blur-[120px]" />
@@ -23,7 +23,7 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        {/* YOUR CUSTOM IMAGE - FIXED FOR MOBILE (REMOVES WHITE SQUARE) */}
+        {/* WRAPPER METHOD - Forces black behind image without blend modes */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -31,26 +31,23 @@ export function Hero() {
           className="flex justify-center items-center"
         >
           <div className="relative w-full max-w-3xl mx-auto">
-            {/* Dark overlay to force black behind any transparency */}
-            <div className="absolute inset-0 bg-black -z-10 rounded-none" />
+            {/* Black background behind image to hide any transparency artifacts */}
+            <div 
+              className="absolute inset-0" 
+              style={{ 
+                backgroundColor: "#000000",
+                zIndex: 0
+              }} 
+            />
             <img 
               src="https://pxbdwprvruhcvzcrsxgu.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-04-01%20at%207.06.34%20AM.jpeg"
               alt="Wildfall: No Man's Jungle"
-              className="w-full h-auto"
+              className="relative w-full h-auto"
               style={{ 
                 display: "block",
-                // CRITICAL FIX: These blend modes remove white/light backgrounds
-                mixBlendMode: "multiply",
-                // Fallback for browsers that don't support mix-blend-mode
-                background: "black",
-                // Ensures no border/outline
-                outline: "none",
-                border: "none",
-                // Removes any potential box shadow
-                boxShadow: "none",
-                // Forces image to render without anti-aliasing artifacts
-                WebkitBackfaceVisibility: "hidden",
-                backfaceVisibility: "hidden"
+                position: "relative",
+                zIndex: 1,
+                backgroundColor: "transparent"
               }}
             />
           </div>
