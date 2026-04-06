@@ -23,23 +23,37 @@ export function Hero() {
           FULL-SCALE LIVE WAR SIMULATION
         </motion.div>
 
-        {/* YOUR CUSTOM IMAGE - FIXED FOR MOBILE */}
+        {/* YOUR CUSTOM IMAGE - FIXED FOR MOBILE (REMOVES WHITE SQUARE) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
           className="flex justify-center items-center"
         >
-          <img 
-            src="https://pxbdwprvruhcvzcrsxgu.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-04-01%20at%207.06.34%20AM.jpeg"
-            alt="Wildfall: No Man's Jungle"
-            className="w-full max-w-3xl mx-auto"
-            style={{ 
-              display: "block",
-              backgroundColor: "transparent",
-              mixBlendMode: "normal"
-            }}
-          />
+          <div className="relative w-full max-w-3xl mx-auto">
+            {/* Dark overlay to force black behind any transparency */}
+            <div className="absolute inset-0 bg-black -z-10 rounded-none" />
+            <img 
+              src="https://pxbdwprvruhcvzcrsxgu.supabase.co/storage/v1/object/public/images/WhatsApp%20Image%202026-04-01%20at%207.06.34%20AM.jpeg"
+              alt="Wildfall: No Man's Jungle"
+              className="w-full h-auto"
+              style={{ 
+                display: "block",
+                // CRITICAL FIX: These blend modes remove white/light backgrounds
+                mixBlendMode: "multiply",
+                // Fallback for browsers that don't support mix-blend-mode
+                background: "black",
+                // Ensures no border/outline
+                outline: "none",
+                border: "none",
+                // Removes any potential box shadow
+                boxShadow: "none",
+                // Forces image to render without anti-aliasing artifacts
+                WebkitBackfaceVisibility: "hidden",
+                backfaceVisibility: "hidden"
+              }}
+            />
+          </div>
         </motion.div>
 
         {/* Stats */}
