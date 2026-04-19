@@ -1,3 +1,8 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, Shield, Settings } from "lucide-react";
@@ -31,104 +36,132 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
     { name: "BATTLEFIELD", href: "#battlefield" },
     { name: "FACTIONS", href: "#factions" },
     { name: "INVESTMENT", href: "#investment" },
+    { name: "ENLIST", href: "#deploy" },
   ];
 
   return (
-    <nav
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b",
-        scrolled ? "bg-black/90 backdrop-blur-md border-gold/20 py-3" : "bg-transparent border-transparent py-6"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        scrolled ? "bg-black/95 backdrop-blur-sm border-b border-white/10" : "bg-transparent"
       )}
     >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 group">
-          <Shield className="w-8 h-8 text-gold transition-transform group-hover:scale-110" />
-          <span className="font-serif text-2xl tracking-tighter gold-gradient-text">WILDFALL</span>
-        </a>
-
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="text-xs font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
-            >
-              {link.name}
-            </a>
-          ))}
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
           
-          <div className="flex items-center gap-4 ml-4 pl-4 border-l border-white/10">
-            {isAdmin && (
-              <button 
-                onClick={onAdminToggle}
-                className="p-2 text-gold/60 hover:text-gold transition-colors"
-                title="Admin Panel"
+          {/* Logo */}
+          <a href="#" className="flex items-center gap-2">
+            <Shield className="w-6 h-6 text-gold" />
+            <span className="text-sm font-mono tracking-widest text-white font-bold">
+              WILDFALL
+            </span>
+          </a>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-6">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-sm font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
               >
-                <Settings className="w-5 h-5" />
+                {link.name}
+              </a>
+            ))}
+            
+            {isAdmin && (
+              <button
+                onClick={onAdminToggle}
+                className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest"
+              >
+                <Settings className="w-4 h-4" />
+                ADMIN
               </button>
             )}
             
             {user ? (
-              <button 
+              <button
                 onClick={logOut}
-                className="flex items-center gap-2 text-xs font-mono text-white/60 hover:text-white transition-colors"
+                className="text-sm font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
               >
-                <span>LOGOUT</span>
+                LOGOUT
               </button>
             ) : (
-              <button 
+              <button
                 onClick={signIn}
-                className="text-xs font-mono text-gold hover:text-white transition-colors"
+                className="text-sm font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
               >
                 LOGIN
               </button>
             )}
           </div>
+
+          {/* Mobile Toggle */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-white"
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
 
-        {/* Mobile Toggle */}
-        <button className="md:hidden text-gold" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X /> : <Menu />}
-        </button>
+        {/* Mobile Nav */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden py-4 border-t border-white/10"
+            >
+              <div className="flex flex-col gap-4">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="text-sm font-mono tracking-widest text-white/60 hover:text-gold"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+                
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      onAdminToggle();
+                      setIsOpen(false);
+                    }}
+                    className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest"
+                  >
+                    <Settings className="w-4 h-4" />
+                    ADMIN PANEL
+                  </button>
+                )}
+                
+                {user ? (
+                  <button
+                    onClick={logOut}
+                    className="text-sm font-mono tracking-widest text-white/60 hover:text-gold text-left"
+                  >
+                    LOGOUT
+                  </button>
+                ) : (
+                  <button
+                    onClick={signIn}
+                    className="text-sm font-mono tracking-widest text-white/60 hover:text-gold text-left"
+                  >
+                    LOGIN
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Mobile Nav */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-black border-b border-gold/20 p-6 flex flex-col gap-6 md:hidden"
-          >
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="text-sm font-mono tracking-widest text-white/60 hover:text-gold"
-              >
-                {link.name}
-              </a>
-            ))}
-            <div className="pt-4 border-t border-white/10 flex flex-col gap-4">
-              {isAdmin && (
-                <button onClick={() => { onAdminToggle(); setIsOpen(false); }} className="text-gold flex items-center gap-2">
-                  <Settings className="w-5 h-5" /> ADMIN PANEL
-                </button>
-              )}
-              {user ? (
-                <button onClick={logOut} className="text-white/60">
-                  LOGOUT
-                </button>
-              ) : (
-                <button onClick={signIn} className="text-gold">LOGIN</button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+    </motion.nav>
   );
 }
+
