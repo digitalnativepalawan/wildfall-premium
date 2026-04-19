@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Shield, Lock, CheckCircle } from "lucide-react";
+import { Shield, Lock, CheckCircle, Sword, Trees, Flag, Crosshair, Heart, Settings, Target, Eye, Crown } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Modal } from "./Modal";
 import { cn } from "../lib/utils";
 
@@ -58,20 +59,23 @@ const INITIAL_MISSIONS: MissionData[] = [
   { id: 24, title: "FINAL CLEARANCE", desc: "The last test.", question: "Type 'READY FOR DEPLOYMENT'", answer: "READY FOR DEPLOYMENT", points: 50, unlocked: false, completed: false },
 ];
 
-const FACTIONS = [
-  { id: "legion", icon: "🔴", name: "Légionnaires du Nord", motto: '"Order through dominance"', badgeClass: "bg-red-900" },
-  { id: "guard", icon: "🔵", name: "National Guard", motto: '"Peace through control"', badgeClass: "bg-blue-900" },
-  { id: "front", icon: "🟢", name: "Popular Front (TPF)", motto: '"Freedom through resistance"', badgeClass: "bg-green-900" },
+interface FactionDef { id: string; Icon: LucideIcon; name: string; motto: string; badgeClass: string; }
+interface RoleDef { id: string; Icon: LucideIcon; name: string; desc: string; }
+
+const FACTIONS: FactionDef[] = [
+  { id: "legion", Icon: Sword,  name: "Légionnaires du Nord", motto: '"Order through dominance"',   badgeClass: "bg-red-900" },
+  { id: "guard",  Icon: Shield, name: "National Guard",        motto: '"Peace through control"',      badgeClass: "bg-blue-900" },
+  { id: "front",  Icon: Trees,  name: "Popular Front (TPF)",   motto: '"Freedom through resistance"', badgeClass: "bg-green-900" },
 ];
 
-const ROLES = [
-  { id: "infantry", icon: "🔫", name: "INFANTRY", desc: "Frontline combatants" },
-  { id: "medic", icon: "💉", name: "MEDIC", desc: "Life-savers under fire" },
-  { id: "engineer", icon: "🔧", name: "ENGINEER", desc: "Fortification and demolition" },
-  { id: "specialforces", icon: "⭐", name: "SPECIAL FORCES", desc: "High-risk, high-reward" },
-  { id: "sniper", icon: "🎯", name: "SNIPER", desc: "Long-range precision" },
-  { id: "spy", icon: "🕵️", name: "SPY", desc: "Infiltration and intelligence" },
-  { id: "command", icon: "🎖️", name: "COMMAND", desc: "Strategic leadership" },
+const ROLES: RoleDef[] = [
+  { id: "infantry",     Icon: Crosshair, name: "INFANTRY",       desc: "Frontline combatants" },
+  { id: "medic",        Icon: Heart,     name: "MEDIC",          desc: "Life-savers under fire" },
+  { id: "engineer",     Icon: Settings,  name: "ENGINEER",       desc: "Fortification and demolition" },
+  { id: "specialforces",Icon: Target,    name: "SPECIAL FORCES", desc: "High-risk, high-reward" },
+  { id: "sniper",       Icon: Flag,      name: "SNIPER",         desc: "Long-range precision" },
+  { id: "spy",          Icon: Eye,       name: "SPY",            desc: "Infiltration and intelligence" },
+  { id: "command",      Icon: Crown,     name: "COMMAND",        desc: "Strategic leadership" },
 ];
 
 const TABS = [
@@ -201,10 +205,7 @@ export function Recruitment() {
 
   const sortedOperatives = [...operatives].sort((a, b) => b.points - a.points);
 
-  const getFactionLabel = (id: string) => {
-    const f = FACTIONS.find((f) => f.id === id);
-    return f ? `${f.icon} ${f.name}` : id;
-  };
+  const getFactionLabel = (id: string) => FACTIONS.find((f) => f.id === id)?.name ?? id;
 
   const getFactionBadge = (id: string) => FACTIONS.find((f) => f.id === id)?.badgeClass ?? "bg-white/10";
 
@@ -318,7 +319,7 @@ export function Recruitment() {
                         selectedFaction === f.id && "border-gold/50 bg-gold/5"
                       )}
                     >
-                      <div className="text-3xl mb-3">{f.icon}</div>
+                      <f.Icon className="w-8 h-8 text-gold mx-auto mb-3" />
                       <div className="font-serif font-bold text-sm mb-1">{f.name}</div>
                       <div className="text-[10px] text-white/40 italic">{f.motto}</div>
                     </button>
@@ -342,7 +343,7 @@ export function Recruitment() {
                         selectedRole === r.id && "border-gold/50 bg-gold/5"
                       )}
                     >
-                      <div className="text-xl mb-2">{r.icon}</div>
+                      <r.Icon className="w-5 h-5 text-gold/70 mb-2" />
                       <div className="text-[10px] font-mono font-bold text-white">{r.name}</div>
                       <div className="text-[10px] text-white/40 mt-1">{r.desc}</div>
                     </button>
