@@ -1,36 +1,22 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
- * 
- * Wildfall Classified Intel System
- * Easter egg hunt for operatives
  */
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { Shield, Lock, Check, X, Eye, FileText } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabase";
 import { Modal } from "./Modal";
 
-interface ClassifiedPage {
-  id: string;
-  title: string;
-  intel: string;
-  points: number;
-  found: boolean;
-  claimed: boolean;
-}
-
 interface ClassifiedIntelProps {
   isOpen: boolean;
   onClose: () => void;
   code?: string;
-  onClaim?: (points: number) => void;
 }
 
-export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIntelProps) {
-  const [page, setPage] = useState<ClassifiedPage | null>(null);
+export function ClassifiedIntel({ isOpen, onClose, code }: ClassifiedIntelProps) {
+  const [page, setPage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [claimed, setClaimed] = useState(false);
@@ -101,28 +87,20 @@ export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIn
     }
 
     // Claim it
-    const { error: insertError } = await supabase
+    await supabase
       .from('classified_claims')
       .insert([{
         operative_id: userId,
         classified_id: page.id
       }]);
 
-    if (insertError) {
-      setError('Failed to claim intel. Try again.');
-      return;
-    }
-
     // Award points
     await supabase
       .from('operatives')
-      .update({ 
-        points: supabase.rpc('get_points', { user_id: userId }) + page.points 
-      })
+      .update({ points: page.points })
       .eq('id', userId);
 
     setClaimed(true);
-    if (onClaim) onClaim(page.points);
   };
 
   return (
@@ -150,7 +128,6 @@ export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIn
             </button>
           </div>
         ) : page && claimed ? (
-          // Already claimed - show intel
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <FileText className="w-5 h-5 text-gold" />
@@ -167,7 +144,7 @@ export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIn
 
             <div className="flex items-center gap-2 text-green-400">
               <Check className="w-5 h-5" />
-              <span className="text-sm">Intel already claimed (+{page.points} pts)</span>
+              <span className="text-sm">Intel claimed (+{page.points} pts)</span>
             </div>
 
             <button
@@ -178,7 +155,6 @@ export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIn
             </button>
           </div>
         ) : page ? (
-          // Not yet claimed - show claim button
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <Eye className="w-5 h-5 text-gold" />
@@ -223,111 +199,5 @@ export function ClassifiedIntel({ isOpen, onClose, code, onClaim }: ClassifiedIn
         ) : null}
       </div>
     </Modal>
-  );
-}
-
-// Hook to track hidden triggers
-export function useHiddenTriggers(onTrigger: (code: string) => void) {
-  const [shieldClicks, setShieldClicks] = useState(0);
-  const [typedKeys, setTypedKeys] = useState('');
-
-  useEffect(() => {
-    // Shield click handler (for navbar)
-    const handleShieldClick = () => {
-      setShieldClicks(prev => {
-        const newCount = prev + 1;
-        if (newCount >= 5) {
-          onTrigger('alpha');
-          return 0;
-        }
-        // Reset after 2 seconds
-        setTimeout(() => setShieldClicks(0), 2000);
-        return newCount;
-      });
-    };
-
-    // Konami code handler (type "jungle")
-    const handleKeyDown = (e: KeyboardEvent) => {
-      setTypedKeys(prev => {
-        const newKeys = (prev + e.key.toLowerCase()).slice(-6);
-        if (newKeys === 'jungle') {
-          onTrigger('echo');
-          return '';
-        }
-        return newKeys;
-      });
-    };
-
-    // Time-based trigger (2-4 AM)
-    const checkNightOwl = () => {
-      const hour = new Date().getHours();
-      if (hour >= 2 && hour < 4) {
-        const claimed = localStorage.getItem('wildfall_foxtrot_claimed');
-        if (!claimed) {
-          onTrigger('foxtrot');
-          localStorage.setItem('wildfall_foxtrot_claimed', 'true');
-        }
-      }
-    };
-
-    // Attach listeners
-    document.addEventListener('keydown', handleKeyDown);
-    
-    // Check night owl on mount
-    checkNightOwl();
-    const nightOwlInterval = setInterval(checkNightOwl, 60000); // Check every minute
-
-    // Cleanup
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      clearInterval(nightOwlInterval);
-    };
-  }, [onTrigger]);
-
-  return { shieldClicks };
-}
-
-// Trigger component for clickable elements
-export function ClassifiedTrigger({ 
-  code, 
-  children, 
-  onTrigger,
-  className,
-  type = 'click'
-}: { 
-  code: string;
-  children: React.ReactNode;
-  onTrigger: (code: string) => void;
-  className?: string;
-  type?: 'click' | 'hover';
-}) {
-  const [hoverCount, setHoverCount] = useState(0);
-
-  if (type === 'hover') {
-    return (
-      <span 
-        className={cn("cursor-help", className)}
-        onMouseEnter={() => {
-          setHoverCount(prev => {
-            if (prev >= 2) {
-              onTrigger(code);
-              return 0;
-            }
-            return prev + 1;
-          });
-        }}
-      >
-        {children}
-      </span>
-    );
-  }
-
-  return (
-    <span 
-      className={cn("cursor-pointer", className)}
-      onClick={() => onTrigger(code)}
-    >
-      {children}
-    </span>
   );
 }
