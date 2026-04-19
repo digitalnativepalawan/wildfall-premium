@@ -23,12 +23,31 @@ const logOut = () => {
 export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [shieldClickCount, setShieldClickCount] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Shield click trigger for classified intel (code: alpha)
+  const handleShieldClick = (e: React.MouseEvent) => {
+    // Prevent navigation if it's a link
+    e.preventDefault();
+    
+    setShieldClickCount(prev => {
+      const newCount = prev + 1;
+      if (newCount >= 5) {
+        // Dispatch event for classified intel
+        window.dispatchEvent(new CustomEvent('classified-trigger', { detail: 'alpha' }));
+        return 0;
+      }
+      // Reset after 2 seconds of no clicks
+      setTimeout(() => setShieldClickCount(0), 2000);
+      return newCount;
+    });
+  };
 
   const navLinks = [
     { name: "EXPERIENCE", href: "#experience" },
@@ -51,9 +70,17 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-gold" />
+          {/* Logo - Shield click trigger for classified intel */}
+          <a 
+            href="#" 
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={handleShieldClick}
+            title="Click 5 times for secret intel"
+          >
+            <Shield className={cn(
+              "w-6 h-6 text-gold transition-transform",
+              shieldClickCount > 0 && "scale-110"
+            )} />
             <span className="text-sm font-mono tracking-widest text-white font-bold">
               WILDFALL
             </span>
@@ -164,4 +191,3 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
     </motion.nav>
   );
 }
-
