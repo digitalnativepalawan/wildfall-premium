@@ -10,15 +10,6 @@ import { cn } from "../lib/utils";
 
 // TODO: Replace with Supabase auth later
 const user = null;
-const isAdmin = false;
-
-const signIn = () => {
-  alert("Login with Supabase coming soon");
-};
-
-const logOut = () => {
-  alert("Logout coming soon");
-};
 
 export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,7 +24,10 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
 
   // Shield click trigger for classified intel (code: alpha)
   const handleShieldClick = (e: React.MouseEvent) => {
-    // Prevent navigation if it's a link
+    // Only trigger if clicking the shield icon itself, not the text
+    const target = e.target as HTMLElement;
+    if (!target.closest('svg')) return;
+    
     e.preventDefault();
     
     setShieldClickCount(prev => {
@@ -75,7 +69,7 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
             href="#" 
             className="flex items-center gap-2 cursor-pointer select-none"
             onClick={handleShieldClick}
-            title="Click 5 times for secret intel"
+            title="Wildfall - Click shield 5 times for secret intel"
           >
             <Shield className={cn(
               "w-6 h-6 text-gold transition-transform",
@@ -98,26 +92,23 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
               </a>
             ))}
             
-            {isAdmin && (
-              <button
-                onClick={onAdminToggle}
-                className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest"
-              >
-                <Settings className="w-4 h-4" />
-                ADMIN
-              </button>
-            )}
+            {/* ADMIN BUTTON - Always visible for now */}
+            <button
+              onClick={onAdminToggle}
+              className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest hover:text-gold/80 transition-colors border border-gold/30 px-3 py-1 rounded-sm hover:border-gold"
+            >
+              <Settings className="w-4 h-4" />
+              ADMIN
+            </button>
             
             {user ? (
               <button
-                onClick={logOut}
                 className="text-sm font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
               >
                 LOGOUT
               </button>
             ) : (
               <button
-                onClick={signIn}
                 className="text-sm font-mono tracking-widest text-white/60 hover:text-gold transition-colors"
               >
                 LOGIN
@@ -155,29 +146,26 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
                   </a>
                 ))}
                 
-                {isAdmin && (
-                  <button
-                    onClick={() => {
-                      onAdminToggle();
-                      setIsOpen(false);
-                    }}
-                    className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest"
-                  >
-                    <Settings className="w-4 h-4" />
-                    ADMIN PANEL
-                  </button>
-                )}
+                {/* ADMIN BUTTON Mobile */}
+                <button
+                  onClick={() => {
+                    onAdminToggle();
+                    setIsOpen(false);
+                  }}
+                  className="text-gold flex items-center gap-2 text-sm font-mono tracking-widest border border-gold/30 px-3 py-2 rounded-sm"
+                >
+                  <Settings className="w-4 h-4" />
+                  ADMIN PANEL
+                </button>
                 
                 {user ? (
                   <button
-                    onClick={logOut}
                     className="text-sm font-mono tracking-widest text-white/60 hover:text-gold text-left"
                   >
                     LOGOUT
                   </button>
                 ) : (
                   <button
-                    onClick={signIn}
                     className="text-sm font-mono tracking-widest text-white/60 hover:text-gold text-left"
                   >
                     LOGIN
