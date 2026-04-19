@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react"; // ← ADD useEffect
+import { useState, useEffect } from "react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { Location } from "./components/Location";
@@ -22,18 +22,15 @@ import { Footer } from "./components/Footer";
 import { FieldManualModal } from "./components/FieldManualModal";
 import { InvestPlayerModal } from "./components/InvestPlayerModal";
 import { AdminPanel } from "./components/AdminPanel";
-import { ClassifiedIntel } from "./components/ClassifiedIntel"; // ← ADD THIS IMPORT
+import { ClassifiedIntel } from "./components/ClassifiedIntel";
 
 export default function App() {
   const [isFieldManualOpen, setIsFieldManualOpen] = useState(false);
   const [isInvestParticipateOpen, setIsInvestParticipateOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  
-  // ← ADD THESE 2 LINES (classified intel state)
   const [classifiedOpen, setClassifiedOpen] = useState(false);
   const [classifiedCode, setClassifiedCode] = useState('');
 
-  // ← ADD THIS useEffect (listen for triggers)
   useEffect(() => {
     const handleClassifiedTrigger = (e: CustomEvent) => {
       setClassifiedCode(e.detail);
@@ -69,7 +66,6 @@ export default function App() {
 
       <Footer />
 
-      {/* Modals */}
       <FieldManualModal 
         isOpen={isFieldManualOpen} 
         onClose={() => setIsFieldManualOpen(false)} 
@@ -82,8 +78,6 @@ export default function App() {
         isOpen={isAdminOpen} 
         onClose={() => setIsAdminOpen(false)} 
       />
-      
-      {/* ← ADD THIS MODAL (classified intel) */}
       <ClassifiedIntel 
         isOpen={classifiedOpen} 
         onClose={() => setClassifiedOpen(false)} 
