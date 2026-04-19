@@ -1,4 +1,4 @@
-/**
+ /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -17,6 +17,7 @@ import { FinalPhase } from "./components/FinalPhase";
 import { Operations } from "./components/Operations";
 import { CTA } from "./components/CTA";
 import { Careers } from "./components/Careers";
+import { Recruitment } from "./components/Recruitment";
 import { Footer } from "./components/Footer";
 import { FieldManualModal } from "./components/FieldManualModal";
 import { InvestPlayerModal } from "./components/InvestPlayerModal";
@@ -47,6 +48,7 @@ export default function App() {
           onInvestParticipate={() => setIsInvestParticipateOpen(true)} 
         />
         <Careers />
+        <Recruitment />
       </main>
 
       <Footer />
