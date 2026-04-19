@@ -31,6 +31,7 @@ export function Navbar({ onAdminToggle }: { onAdminToggle: () => void }) {
     { name: "BATTLEFIELD", href: "#battlefield" },
     { name: "FACTIONS", href: "#factions" },
     { name: "INVESTMENT", href: "#investment" },
+    { name: "ENLIST", href: "#deploy" },
   ];
 
   return (
