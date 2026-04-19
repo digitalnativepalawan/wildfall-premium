@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { Location } from "./components/Location";
@@ -22,24 +22,11 @@ import { Footer } from "./components/Footer";
 import { FieldManualModal } from "./components/FieldManualModal";
 import { InvestPlayerModal } from "./components/InvestPlayerModal";
 import { AdminPanel } from "./components/AdminPanel";
-import { ClassifiedIntel } from "./components/ClassifiedIntel";
 
 export default function App() {
   const [isFieldManualOpen, setIsFieldManualOpen] = useState(false);
   const [isInvestParticipateOpen, setIsInvestParticipateOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-  const [classifiedOpen, setClassifiedOpen] = useState(false);
-  const [classifiedCode, setClassifiedCode] = useState('');
-
-  useEffect(() => {
-    const handleClassifiedTrigger = (e: CustomEvent) => {
-      setClassifiedCode(e.detail);
-      setClassifiedOpen(true);
-    };
-    
-    window.addEventListener('classified-trigger' as any, handleClassifiedTrigger);
-    return () => window.removeEventListener('classified-trigger' as any, handleClassifiedTrigger);
-  }, []);
 
   return (
     <div className="min-h-screen bg-black selection:bg-gold selection:text-black">
@@ -77,11 +64,6 @@ export default function App() {
       <AdminPanel 
         isOpen={isAdminOpen} 
         onClose={() => setIsAdminOpen(false)} 
-      />
-      <ClassifiedIntel 
-        isOpen={classifiedOpen} 
-        onClose={() => setClassifiedOpen(false)} 
-        code={classifiedCode}
       />
     </div>
   );
