@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Shield, Heart, Settings, Target, Crosshair, Eye, Crown,
   Sword, Trees, Users, Trophy, Package, Search,
-  Lock, Check, X
+  Lock, Check, X, LogIn
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { supabase } from "../lib/supabase";
@@ -36,6 +36,7 @@ interface Operative {
   missions_complete: number;
   points: number;
   deployment_code: string;
+  created_at: string;
 }
 
 interface Mission {
@@ -48,6 +49,7 @@ interface Mission {
   hint: string | null;
   points: number;
   unlock_level: number;
+  week: number;
   completed: boolean;
 }
 
@@ -96,6 +98,7 @@ export function Recruitment() {
   const [currentUser, setCurrentUser] = useState<Operative | null>(null);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(false);
   
   const [formData, setFormData] = useState({
     codename: '',
@@ -104,6 +107,9 @@ export function Recruitment() {
     bio: '',
     squad: ''
   });
+  
+  const [loginCode, setLoginCode] = useState('');
+  const [loginError, setLoginError] = useState('');
   
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [missionAnswer, setMissionAnswer] = useState('');
@@ -147,8 +153,6 @@ export function Recruitment() {
             completed: completedIds.includes(m.id)
           })));
         }
-        
-        setActiveTab('dashboard');
       }
     }
     
@@ -183,6 +187,27 @@ export function Recruitment() {
       localStorage.setItem('wildfall_user_id', data.id);
       setActiveTab('dashboard');
       fetchData();
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!loginCode.trim()) return;
+    
+    const { data, error } = await supabase
+      .from('operatives')
+      .select('*')
+      .eq('deployment_code', loginCode.trim().toUpperCase())
+      .single();
+    
+    if (data) {
+      setCurrentUser(data);
+      localStorage.setItem('wildfall_user_id', data.id);
+      setLoginCode('');
+      setLoginError('');
+      setShowLogin(false);
+      fetchData();
+    } else {
+      setLoginError('Invalid deployment code. Check your code and try again.');
     }
   };
 
@@ -289,7 +314,7 @@ export function Recruitment() {
         {/* TABS */}
         <div className="flex justify-center gap-2 mb-8 flex-wrap">
           {[
-            { id: 'create', label: 'Create Profile', icon: Shield },
+            { id: 'create', label: currentUser ? 'My Profile' : 'Create / Login', icon: Shield },
             { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
             { id: 'missions', label: 'Missions', icon: Target },
             { id: 'dashboard', label: 'Dashboard', icon: Users }
@@ -313,7 +338,7 @@ export function Recruitment() {
         {/* TAB CONTENT */}
         <AnimatePresence mode="wait">
           
-          {/* CREATE PROFILE */}
+          {/* CREATE / LOGIN TAB */}
           {activeTab === 'create' && (
             <motion.div
               key="create"
@@ -322,117 +347,252 @@ export function Recruitment() {
               exit={{ opacity: 0, x: -20 }}
               className="space-y-8"
             >
-              {/* Faction Selection */}
-              <div>
-                <p className="text-xs font-mono text-gold/70 tracking-widest uppercase mb-4">
-                  Choose Your Faction
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {Object.entries(FACTION_CONFIG).map(([key, config]) => (
-                    <motion.button
-                      key={key}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setFormData({ ...formData, faction: key as Faction })}
-                      className={cn(
-                        "card-premium p-6 text-left transition-all",
-                        formData.faction === key && "border-gold bg-gold/5"
-                      )}
+              {currentUser ? (
+                // LOGGED IN: Show profile summary
+                <div className="card-premium p-8 text-center">
+                  <div className={cn(
+                    "w-24 h-24 rounded-full flex items-center justify-center border-2 mx-auto mb-4",
+                    currentUser.faction === 'legion' && "border-red-400 bg-red-900/20",
+                    currentUser.faction === 'guard' && "border-blue-400 bg-blue-900/20",
+                    currentUser.faction === 'front' && "border-green-400 bg-green-900/20"
+                  )}>
+                    {(() => {
+                      const Icon = FACTION_CONFIG[currentUser.faction].Icon;
+                      return <Icon className={cn("w-12 h-12",
+                        currentUser.faction === 'legion' && "text-red-400",
+                        currentUser.faction === 'guard' && "text-blue-400",
+                        currentUser.faction === 'front' && "text-green-400"
+                      )} />;
+                    })()}
+                  </div>
+                  <h3 className="text-2xl font-serif font-bold mb-2">{currentUser.codename}</h3>
+                  <p className="text-gold mb-1">{FACTION_CONFIG[currentUser.faction].name}</p>
+                  <p className="text-gray-400 mb-4">{ROLE_CONFIG[currentUser.role].name}</p>
+                  <p className="text-sm text-gray-500 mb-6 font-mono">
+                    Deployment Code: <span className="text-gold">{currentUser.deployment_code}</span>
+                  </p>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setActiveTab('dashboard')}
+                      className="px-6 py-3 bg-gold text-black font-bold rounded-sm"
                     >
-                      <div className="flex items-center gap-3 mb-3">
-                        <config.Icon className={cn("w-8 h-8",
-                          key === 'legion' && "text-red-400",
-                          key === 'guard' && "text-blue-400",
-                          key === 'front' && "text-green-400"
-                        )} />
-                        <h4 className="font-serif font-bold text-lg">{config.name}</h4>
+                      Go to Dashboard
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="px-6 py-3 border border-white/20 text-white font-bold rounded-sm hover:bg-white/5"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              ) : showLogin ? (
+                // LOGIN FORM
+                <div className="max-w-md mx-auto">
+                  <button
+                    onClick={() => { setShowLogin(false); setLoginError(''); }}
+                    className="text-sm text-gold mb-4 hover:underline"
+                  >
+                    ← Back to Create Profile
+                  </button>
+                  
+                  <div className="card-premium p-8">
+                    <div className="text-center mb-6">
+                      <LogIn className="w-12 h-12 text-gold mx-auto mb-4" />
+                      <h3 className="text-xl font-serif font-bold">Operative Login</h3>
+                      <p className="text-sm text-gray-400 mt-2">
+                        Enter your deployment code to access your profile
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
+                          Deployment Code
+                        </label>
+                        <input
+                          type="text"
+                          value={loginCode}
+                          onChange={(e) => setLoginCode(e.target.value)}
+                          placeholder="e.g., WF-2026-LEG-451"
+                          className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none font-mono uppercase"
+                        />
+                        {loginError && (
+                          <p className="text-red-400 text-sm mt-2">{loginError}</p>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-400 italic mb-2">{config.motto}</p>
-                      <p className="text-sm text-gold">{config.bonus}</p>
-                    </motion.button>
-                  ))}
+                      
+                      <button
+                        onClick={handleLogin}
+                        disabled={!loginCode.trim()}
+                        className="w-full py-4 bg-gold text-black font-bold rounded-sm hover:bg-gold/80 transition disabled:opacity-50"
+                      >
+                        <LogIn className="w-5 h-5 inline mr-2" />
+                        ACCESS PROFILE
+                      </button>
+                    </div>
+                    
+                    <div className="mt-6 p-4 bg-gray-900 rounded-sm border border-white/5">
+                      <p className="text-xs text-gray-400 text-center">
+                        Your deployment code was shown after you created your profile.<br/>
+                        Example format: <span className="text-gold font-mono">WF-2026-LEG-451</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {/* Role Selection */}
-              <div>
-                <p className="text-xs font-mono text-gold/70 tracking-widest uppercase mb-4">
-                  Choose Your Role
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {Object.entries(ROLE_CONFIG).map(([key, config]) => (
-                    <motion.button
-                      key={key}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setFormData({ ...formData, role: key as Role })}
-                      className={cn(
-                        "card-premium p-4 text-center transition-all",
-                        formData.role === key && "border-gold bg-gold/5"
-                      )}
-                    >
-                      <config.Icon className="w-6 h-6 text-gold mx-auto mb-2" />
-                      <h4 className="font-bold">{config.name}</h4>
-                      <p className="text-xs text-gray-400 mt-1">{config.desc}</p>
-                    </motion.button>
-                  ))}
+              ) : (
+                // CHOICE: Create New or Login
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                  {/* Create New */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowLogin(false)}
+                    className="card-premium p-8 text-left h-full"
+                  >
+                    <Shield className="w-12 h-12 text-gold mb-4" />
+                    <h3 className="text-xl font-serif font-bold mb-2">Create New Profile</h3>
+                    <p className="text-gray-400 mb-4">
+                      Join the Wildfall operative program. Choose your faction and role.
+                    </p>
+                    <span className="text-gold text-sm font-mono">Get Started →</span>
+                  </motion.button>
+                  
+                  {/* Login */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowLogin(true)}
+                    className="card-premium p-8 text-left h-full border-gold/30"
+                  >
+                    <LogIn className="w-12 h-12 text-gold mb-4" />
+                    <h3 className="text-xl font-serif font-bold mb-2">Existing Operative</h3>
+                    <p className="text-gray-400 mb-4">
+                      Already have a deployment code? Login to continue your training.
+                    </p>
+                    <span className="text-gold text-sm font-mono">Enter Code →</span>
+                  </motion.button>
                 </div>
-              </div>
+              )}
 
-              {/* Form Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
-                    Codename
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.codename}
-                    onChange={(e) => setFormData({ ...formData, codename: e.target.value })}
-                    placeholder="e.g., Ghost_07"
-                    className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none font-mono"
-                  />
+              {/* CREATE PROFILE FORM (only show if not logged in and not showing login) */}
+              {!currentUser && !showLogin && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-serif mb-6 text-center">Create New Operative Profile</h3>
+                  
+                  {/* Faction Selection */}
+                  <div>
+                    <p className="text-xs font-mono text-gold/70 tracking-widest uppercase mb-4">
+                      Choose Your Faction
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {Object.entries(FACTION_CONFIG).map(([key, config]) => (
+                        <motion.button
+                          key={key}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setFormData({ ...formData, faction: key as Faction })}
+                          className={cn(
+                            "card-premium p-6 text-left transition-all",
+                            formData.faction === key && "border-gold bg-gold/5"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <config.Icon className={cn("w-8 h-8",
+                              key === 'legion' && "text-red-400",
+                              key === 'guard' && "text-blue-400",
+                              key === 'front' && "text-green-400"
+                            )} />
+                            <h4 className="font-serif font-bold text-lg">{config.name}</h4>
+                          </div>
+                          <p className="text-sm text-gray-400 italic mb-2">{config.motto}</p>
+                          <p className="text-sm text-gold">{config.bonus}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Role Selection */}
+                  <div className="mt-8">
+                    <p className="text-xs font-mono text-gold/70 tracking-widest uppercase mb-4">
+                      Choose Your Role
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {Object.entries(ROLE_CONFIG).map(([key, config]) => (
+                        <motion.button
+                          key={key}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setFormData({ ...formData, role: key as Role })}
+                          className={cn(
+                            "card-premium p-4 text-center transition-all",
+                            formData.role === key && "border-gold bg-gold/5"
+                          )}
+                        >
+                          <config.Icon className="w-6 h-6 text-gold mx-auto mb-2" />
+                          <h4 className="font-bold">{config.name}</h4>
+                          <p className="text-xs text-gray-400 mt-1">{config.desc}</p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div>
+                      <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
+                        Codename
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.codename}
+                        onChange={(e) => setFormData({ ...formData, codename: e.target.value })}
+                        placeholder="e.g., Ghost_07"
+                        className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
+                        Squad Name (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.squad}
+                        onChange={(e) => setFormData({ ...formData, squad: e.target.value })}
+                        placeholder="e.g., Alpha Team"
+                        className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="mt-4">
+                    <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
+                      Your Story (Max 150 Characters)
+                    </label>
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      maxLength={150}
+                      placeholder="Who are you in the jungle?"
+                      className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none resize-none h-24"
+                    />
+                    <p className="text-right text-xs text-gray-500 mt-1 font-mono">
+                      {formData.bio.length}/150
+                    </p>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    onClick={handleCreateProfile}
+                    disabled={!formData.codename || !formData.faction || !formData.role}
+                    className="w-full mt-6 py-4 bg-gold text-black font-bold rounded-sm hover:bg-gold/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Shield className="w-5 h-5 inline mr-2" />
+                    DEPLOY PROFILE
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
-                    Squad Name (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.squad}
-                    onChange={(e) => setFormData({ ...formData, squad: e.target.value })}
-                    placeholder="e.g., Alpha Team"
-                    className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="block text-xs font-mono text-gold/70 tracking-widest uppercase mb-2">
-                  Your Story (Max 150 Characters)
-                </label>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  maxLength={150}
-                  placeholder="Who are you in the jungle?"
-                  className="w-full p-3 bg-gray-900 rounded-sm border border-white/10 focus:border-gold focus:outline-none resize-none h-24"
-                />
-                <p className="text-right text-xs text-gray-500 mt-1 font-mono">
-                  {formData.bio.length}/150
-                </p>
-              </div>
-
-              {/* Submit */}
-              <button
-                onClick={handleCreateProfile}
-                disabled={!formData.codename || !formData.faction || !formData.role}
-                className="w-full py-4 bg-gold text-black font-bold rounded-sm hover:bg-gold/80 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Shield className="w-5 h-5 inline mr-2" />
-                DEPLOY PROFILE
-              </button>
+              )}
             </motion.div>
           )}
 
@@ -517,12 +677,12 @@ export function Recruitment() {
               {!currentUser ? (
                 <div className="text-center py-12">
                   <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Create a profile to access missions</p>
+                  <p className="text-gray-400">Create a profile or login to access missions</p>
                   <button
                     onClick={() => setActiveTab('create')}
                     className="mt-4 px-6 py-2 bg-gold text-black font-bold rounded-sm"
                   >
-                    Create Profile
+                    Go to Login
                   </button>
                 </div>
               ) : (
@@ -576,12 +736,12 @@ export function Recruitment() {
               {!currentUser ? (
                 <div className="text-center py-12">
                   <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Create a profile to view dashboard</p>
+                  <p className="text-gray-400">Create a profile or login to view dashboard</p>
                   <button
                     onClick={() => setActiveTab('create')}
                     className="mt-4 px-6 py-2 bg-gold text-black font-bold rounded-sm"
                   >
-                    Create Profile
+                    Go to Login
                   </button>
                 </div>
               ) : (
@@ -611,6 +771,11 @@ export function Recruitment() {
                           <span>{ROLE_CONFIG[currentUser.role].name}</span>
                           {currentUser.squad_name && <span>• {currentUser.squad_name}</span>}
                         </div>
+                        {currentUser.bio && (
+                          <p className="text-sm text-gray-400 mt-2 italic">
+                            "{currentUser.bio}"
+                          </p>
+                        )}
                       </div>
                     </div>
                     
@@ -638,6 +803,9 @@ export function Recruitment() {
                     <div className="mt-6 p-4 bg-gold/10 border border-gold/30 rounded-sm">
                       <p className="text-xs font-mono text-gold/70 mb-1">DEPLOYMENT CODE</p>
                       <p className="text-xl font-mono text-gold font-bold">{currentUser.deployment_code}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Save this code! You need it to login on other devices.
+                      </p>
                     </div>
                   </div>
 
