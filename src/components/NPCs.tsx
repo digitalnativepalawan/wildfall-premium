@@ -12,7 +12,7 @@ const DEFAULT_NPCS = [
     id: "hopper",
     name: "Mr. Hopper",
     role: "The Broker",
-    image_file: "npc-hopper.jpg",
+    image_file: "npc-hopper.jpg.png",
     description: "A mysterious figure who controls the flow of information and tokens in Las Sombras. Never takes sides, but his prices favor those with power.",
     intel: "Mr. Hopper sees all transactions in Las Sombras. His network of informants extends beyond the village into the jungle itself. He never takes sides, but his prices favor those with power."
   },
@@ -20,7 +20,7 @@ const DEFAULT_NPCS = [
     id: "santiago",
     name: "Don Santiago",
     role: "The Landlord",
-    image_file: "npc-santiago.jpg",
+    image_file: "npc-santiago.jpg.png",
     description: "The de-facto ruler of Las Sombras Village. His 'neutrality' is maintained by knowing everyone's secrets. Owns the land beneath the village.",
     intel: "Don Santiago owns the land beneath Las Sombras. His 'neutrality' is maintained by knowing everyone's secrets. Cross him, and you have no shelter in the jungle."
   },
@@ -28,7 +28,7 @@ const DEFAULT_NPCS = [
     id: "mateo",
     name: "Mateo Cruz",
     role: "The Guide",
-    image_file: "npc-mateo.jpg",
+    image_file: "npc-mateo.jpg.png",
     description: "A local who knows every hidden path and trap in the 60-hectare jungle. Born in these jungles, he knows the 12 hidden paths by heart.",
     intel: "Mateo was born in these jungles. He knows the 12 hidden paths by heart, including which ones are trapped. Without him, operatives get lost... or worse."
   },
@@ -36,7 +36,7 @@ const DEFAULT_NPCS = [
     id: "esperanza",
     name: "Doña Esperanza",
     role: "The Healer",
-    image_file: "npc-esperanza.jpg",
+    image_file: "npc-esperanza.jpg.png",
     description: "Runs the village hospital. Her neutrality is absolute, her skills legendary. Treats Legion, Guard, and Front alike.",
     intel: "In Las Sombras, Doña Esperanza treats all factions alike. Her hospital is sacred ground. Wounded operatives from all sides have sworn loyalty to her."
   },
@@ -44,7 +44,7 @@ const DEFAULT_NPCS = [
     id: "landa",
     name: "Christopher Landa",
     role: "The Mercenary",
-    image_file: "npc-landa.jpg",
+    image_file: "npc-landa.jpg.png",
     description: "A former special forces operative who sells his services to the highest bidder. Doesn't believe in factions — only pesos.",
     intel: "Landa doesn't believe in factions. He believes in pesos. Former military, trained operatives for all three sides. Today your ally, tomorrow your enemy."
   },
@@ -52,7 +52,7 @@ const DEFAULT_NPCS = [
     id: "farrier",
     name: "Farrier",
     role: "The Armorer",
-    image_file: "npc-farrier.jpg",
+    image_file: "npc-farrier.jpg.png",
     description: "Master of weaponry. If it fires, he can fix it or make it more lethal. Maintains the Armory in Las Sombras.",
     intel: "Farrier maintains the Armory in Las Sombras. His custom modifications are sought after by all factions. A weapon from Farrier won't jam when you need it most."
   },
@@ -60,7 +60,7 @@ const DEFAULT_NPCS = [
     id: "gavarra",
     name: "Ka Gavarra",
     role: "The Ideologue",
-    image_file: "npc-gavarra.jpg",
+    image_file: "npc-gavarra.jpg.png",
     description: "The spiritual leader of the Popular Front, inspiring resistance through the canopy. Once a teacher, now a revolutionary.",
     intel: "Ka Gavarra was once a teacher. Now he inspires the Popular Front to see the jungle not as enemy, but as ally. His followers know every tree, every shadow."
   },
@@ -68,7 +68,7 @@ const DEFAULT_NPCS = [
     id: "montenegro",
     name: "Montenegro",
     role: "The Enforcer",
-    image_file: "npc-montenegro.jpg",
+    image_file: "npc-montenegro.jpg.png",
     description: "A brutal commander who ensures the rules of engagement are followed — or else. Even faction leaders fear his judgment.",
     intel: "Montenegro enforces the Rules of Engagement. Break them, and you answer to him. He's been known to end careers permanently. Even faction leaders fear his judgment."
   }
