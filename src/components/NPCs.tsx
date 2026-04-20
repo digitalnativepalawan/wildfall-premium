@@ -52,7 +52,7 @@ const DEFAULT_NPCS = [
     id: "farrier",
     name: "Farrier",
     role: "The Armorer",
-    image_file: "npc-farrier.jpg.png",
+    image_file: "npc-ferrier.jpg.png",
     description: "Master of weaponry. If it fires, he can fix it or make it more lethal. Maintains the Armory in Las Sombras.",
     intel: "Farrier maintains the Armory in Las Sombras. His custom modifications are sought after by all factions. A weapon from Farrier won't jam when you need it most."
   },
