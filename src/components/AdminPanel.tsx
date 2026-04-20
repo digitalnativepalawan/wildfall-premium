@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "motion/react";
-import { Shield, Users, Trophy, Package, Sword, Trees, Plus, Clock, Zap, Trash2, RefreshCw } from "lucide-react";
+import { Shield, Users, Trophy, Package, Sword, Trees, Zap, Trash2, RefreshCw } from "lucide-react";
 import { Modal } from "./Modal";
 
 const ADMIN_PASSWORD = "5309";
@@ -91,10 +90,14 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
     const { data, error } = await supabase.from('supply_crates').insert([{
       label: crateForm.label,
+      min_points: crateForm.points_min,
+      max_points: crateForm.points_max,
       points_min: crateForm.points_min,
       points_max: crateForm.points_max,
+      expire_time: expiresAt,
       expires_at: expiresAt,
       max_claims: crateForm.max_claims,
+      current_claims: 0,
       claim_count: 0,
       active: true,
     }]).select().single();
@@ -119,7 +122,6 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     if (!awardTarget.trim() || !awardPoints) return;
     const { supabase } = await import("../lib/supabase");
 
-    // Find operative by codename or deployment code
     const { data: op } = await supabase
       .from('operatives')
       .select('*')
@@ -162,7 +164,7 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
   const totalPlayers = operatives.length;
   const totalPoints = operatives.reduce((sum, o) => sum + o.points, 0);
-  const activeCrates = crates.filter(c => c.active && new Date(c.expires_at) > new Date());
+  const activeCrates = crates.filter(c => c.active && new Date(c.expire_time) > new Date());
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -245,14 +247,12 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         {/* SUPPLY DROPS */}
         {activeTab === 'crates' && (
           <div className="space-y-6">
-            {/* Drop form */}
             <div className="bg-gray-900 rounded p-6 border border-gold/20">
               <div className="flex items-center gap-2 mb-4">
                 <Package className="w-5 h-5 text-gold" />
                 <h3 className="text-sm font-mono text-gold uppercase">Drop New Crate</h3>
               </div>
 
-              {/* Presets */}
               <div className="mb-4">
                 <p className="text-xs font-mono text-white/40 mb-2 uppercase">Quick Presets</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -275,7 +275,6 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 </div>
               </div>
 
-              {/* Custom form */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="col-span-2">
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Label</label>
@@ -333,18 +332,10 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 disabled={dropping}
                 className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {dropping ? (
-                  <>Dropping...</>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4" />
-                    DROP SUPPLY CRATE
-                  </>
-                )}
+                {dropping ? <>Dropping...</> : <><Zap className="w-4 h-4" /> DROP SUPPLY CRATE</>}
               </button>
             </div>
 
-            {/* Recent crates */}
             <div>
               <h3 className="text-sm font-mono text-white/40 uppercase mb-3">Recent Drops</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -352,8 +343,8 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                   <p className="text-sm text-white/20 font-mono">No crates dropped yet.</p>
                 ) : (
                   crates.map((crate: any) => {
-                    const isActive = crate.active && new Date(crate.expires_at) > new Date();
-                    const remaining = Math.max(0, Math.floor((new Date(crate.expires_at).getTime() - Date.now()) / 60000));
+                    const isActive = crate.active && new Date(crate.expire_time) > new Date();
+                    const remaining = Math.max(0, Math.floor((new Date(crate.expire_time).getTime() - Date.now()) / 60000));
                     return (
                       <div key={crate.id} className={`flex items-center justify-between p-3 rounded border ${
                         isActive ? 'border-gold/30 bg-gold/5' : 'border-white/5 bg-black opacity-50'
@@ -361,13 +352,13 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                         <div>
                           <p className="text-sm font-mono font-bold">{crate.label}</p>
                           <p className="text-xs text-white/40">
-                            {crate.claim_count}/{crate.max_claims} claimed •{' '}
+                            {crate.current_claims}/{crate.max_claims} claimed •{' '}
                             {isActive ? `${remaining}m left` : 'Expired'}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-gold font-mono text-sm">
-                            {crate.points_min}–{crate.points_max}
+                            {crate.min_points}–{crate.max_points}
                           </span>
                           {isActive && (
                             <button
