@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Users, Trophy, Package, Sword, Trees, Zap, Trash2, RefreshCw, FileText, Plus } from "lucide-react";
+import { Shield, Users, Trophy, Package, Sword, Trees, Zap, Trash2, RefreshCw, FileText, Plus, Image } from "lucide-react";
 import { Modal } from "./Modal";
 
 const ADMIN_PASSWORD = "5309";
+const IMG = "https://pxbdwprvruhcvzcrsxgu.supabase.co/storage/v1/object/public/images/";
 
 interface CrateForm {
   label: string;
@@ -34,11 +35,28 @@ interface IntelForm {
   points: number;
 }
 
-const DEFAULT_INTEL_FORM: IntelForm = {
-  id: '',
-  title: '',
+const DEFAULT_INTEL_FORM: IntelForm = { id: '', title: '', intel: '', points: 25 };
+
+interface CharacterForm {
+  name: string;
+  role: string;
+  type: string;
+  faction: string;
+  description: string;
+  intel: string;
+  image_file: string;
+  sort_order: number;
+}
+
+const DEFAULT_CHAR_FORM: CharacterForm = {
+  name: '',
+  role: '',
+  type: 'npc',
+  faction: '',
+  description: '',
   intel: '',
-  points: 25,
+  image_file: '',
+  sort_order: 0,
 };
 
 export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -49,11 +67,14 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   const [factionStats, setFactionStats] = useState<any[]>([]);
   const [crates, setCrates] = useState<any[]>([]);
   const [classifiedList, setClassifiedList] = useState<any[]>([]);
+  const [charactersList, setCharactersList] = useState<any[]>([]);
   const [crateForm, setCrateForm] = useState<CrateForm>(DEFAULT_CRATE_FORM);
   const [intelForm, setIntelForm] = useState<IntelForm>(DEFAULT_INTEL_FORM);
+  const [charForm, setCharForm] = useState<CharacterForm>(DEFAULT_CHAR_FORM);
   const [dropping, setDropping] = useState(false);
   const [dropSuccess, setDropSuccess] = useState('');
   const [intelSuccess, setIntelSuccess] = useState('');
+  const [charSuccess, setCharSuccess] = useState('');
   const [awardTarget, setAwardTarget] = useState('');
   const [awardPoints, setAwardPoints] = useState(10);
   const [awardMsg, setAwardMsg] = useState('');
@@ -62,22 +83,22 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     if (!isAuthenticated) return;
     const { supabase } = await import("../lib/supabase");
 
-    const [opsRes, statsRes, cratesRes, intelRes] = await Promise.all([
+    const [opsRes, statsRes, cratesRes, intelRes, charsRes] = await Promise.all([
       supabase.from('operatives').select('*').order('points', { ascending: false }),
       supabase.from('faction_stats').select('*'),
       supabase.from('supply_crates').select('*').order('created_at', { ascending: false }).limit(20),
       supabase.from('classified_intel').select('*').order('created_at', { ascending: false }),
+      supabase.from('characters').select('*').order('sort_order'),
     ]);
 
     if (opsRes.data) setOperatives(opsRes.data);
     if (statsRes.data) setFactionStats(statsRes.data);
     if (cratesRes.data) setCrates(cratesRes.data);
     if (intelRes.data) setClassifiedList(intelRes.data);
+    if (charsRes.data) setCharactersList(charsRes.data);
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    if (isAuthenticated) fetchData();
-  }, [isAuthenticated, fetchData]);
+  useEffect(() => { if (isAuthenticated) fetchData(); }, [isAuthenticated, fetchData]);
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -103,10 +124,8 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     if (dropping) return;
     setDropping(true);
     setDropSuccess('');
-
     const { supabase } = await import("../lib/supabase");
     const expiresAt = new Date(Date.now() + crateForm.duration_minutes * 60 * 1000).toISOString();
-
     const { data, error } = await supabase.from('supply_crates').insert([{
       label: crateForm.label,
       min_points: crateForm.points_min,
@@ -120,7 +139,6 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
       claim_count: 0,
       active: true,
     }]).select().single();
-
     setDropping(false);
     if (data) {
       setDropSuccess(`✓ "${crateForm.label}" dropped! Expires in ${crateForm.duration_minutes} min.`);
@@ -142,23 +160,15 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
       setIntelSuccess('Fill in all fields.');
       return;
     }
-
     const { supabase } = await import("../lib/supabase");
-
     const code = intelForm.id.toUpperCase().replace(/\s+/g, '-');
-
     const { error } = await supabase.from('classified_intel').insert([{
-      id: code,
-      title: intelForm.title,
-      intel: intelForm.intel,
-      points: intelForm.points,
-      active: true,
+      id: code, title: intelForm.title, intel: intelForm.intel, points: intelForm.points, active: true,
     }]);
-
     if (error) {
       setIntelSuccess('Error: ' + error.message);
     } else {
-      setIntelSuccess(`✓ Code "${code}" created! Hide it somewhere on the site.`);
+      setIntelSuccess(`✓ Code "${code}" created!`);
       setIntelForm(DEFAULT_INTEL_FORM);
       fetchData();
       setTimeout(() => setIntelSuccess(''), 6000);
@@ -171,21 +181,37 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     fetchData();
   };
 
+  const handleCreateCharacter = async () => {
+    if (!charForm.name || !charForm.role || !charForm.description || !charForm.image_file) {
+      setCharSuccess('Fill in name, role, description and image filename.');
+      return;
+    }
+    const { supabase } = await import("../lib/supabase");
+    const { error } = await supabase.from('characters').insert([{ ...charForm, active: true }]);
+    if (error) {
+      setCharSuccess('Error: ' + error.message);
+    } else {
+      setCharSuccess(`✓ "${charForm.name}" added!`);
+      setCharForm(DEFAULT_CHAR_FORM);
+      fetchData();
+      setTimeout(() => setCharSuccess(''), 5000);
+    }
+  };
+
+  const handleDeactivateCharacter = async (id: string) => {
+    const { supabase } = await import("../lib/supabase");
+    await supabase.from('characters').update({ active: false }).eq('id', id);
+    fetchData();
+  };
+
   const handleAwardPoints = async () => {
     if (!awardTarget.trim() || !awardPoints) return;
     const { supabase } = await import("../lib/supabase");
-
     const { data: op } = await supabase
-      .from('operatives')
-      .select('*')
+      .from('operatives').select('*')
       .or(`codename.ilike.${awardTarget.trim()},deployment_code.ilike.${awardTarget.trim().toUpperCase()}`)
       .single();
-
-    if (!op) {
-      setAwardMsg('Operative not found.');
-      return;
-    }
-
+    if (!op) { setAwardMsg('Operative not found.'); return; }
     await supabase.from('operatives').update({ points: op.points + awardPoints }).eq('id', op.id);
     setAwardMsg(`✓ +${awardPoints} pts awarded to ${op.codename}`);
     setAwardTarget('');
@@ -199,17 +225,10 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         <div className="space-y-6 py-4 text-center">
           <Shield className="w-16 h-16 text-gold mx-auto mb-4" />
           <p className="text-gray-400 mb-4">Enter admin password</p>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password..."
-            className="w-full p-3 bg-gray-900 rounded border border-white/10 text-white"
-            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-          />
-          <button onClick={handleLogin} className="w-full py-3 bg-gold text-black font-bold rounded">
-            ACCESS ADMIN
-          </button>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password..." className="w-full p-3 bg-gray-900 rounded border border-white/10 text-white"
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()} />
+          <button onClick={handleLogin} className="w-full py-3 bg-gold text-black font-bold rounded">ACCESS ADMIN</button>
         </div>
       </Modal>
     );
@@ -224,6 +243,7 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     { id: 'overview', label: 'Overview' },
     { id: 'crates', label: `Supply Drops ${activeCrates.length > 0 ? `(${activeCrates.length})` : ''}` },
     { id: 'classified', label: `Classified ${activeIntel.length > 0 ? `(${activeIntel.length})` : ''}` },
+    { id: 'characters', label: `Characters (${charactersList.length})` },
     { id: 'players', label: 'Players' },
     { id: 'award', label: 'Award Points' },
   ];
@@ -234,14 +254,11 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-white/10">
           <span className="text-xs font-mono text-gold/70 uppercase">Game Control</span>
           <div className="flex items-center gap-4">
-            <button onClick={fetchData} className="text-white/40 hover:text-gold">
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            <button onClick={fetchData} className="text-white/40 hover:text-gold"><RefreshCw className="w-4 h-4" /></button>
             <button onClick={handleLogout} className="text-xs text-red-400">Logout</button>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-900 rounded p-4 border border-white/10 text-center">
             <p className="text-xs text-gray-400 uppercase font-mono">Players</p>
@@ -253,22 +270,14 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
           </div>
           <div className="bg-gray-900 rounded p-4 border border-white/10 text-center">
             <p className="text-xs text-gray-400 uppercase font-mono">Active Crates</p>
-            <p className={`text-2xl font-bold ${activeCrates.length > 0 ? 'text-gold animate-pulse' : 'text-white/30'}`}>
-              {activeCrates.length}
-            </p>
+            <p className={`text-2xl font-bold ${activeCrates.length > 0 ? 'text-gold animate-pulse' : 'text-white/30'}`}>{activeCrates.length}</p>
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-xs font-mono uppercase transition-colors ${
-                activeTab === tab.id ? 'text-gold border-b-2 border-gold' : 'text-white/60 hover:text-white'
-              }`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 text-xs font-mono uppercase transition-colors ${activeTab === tab.id ? 'text-gold border-b-2 border-gold' : 'text-white/60 hover:text-white'}`}>
               {tab.label}
             </button>
           ))}
@@ -278,24 +287,20 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         {activeTab === 'overview' && (
           <div className="space-y-4">
             <h3 className="text-sm font-mono text-gold/70 uppercase">Faction Standings</h3>
-            {factionStats.length === 0 ? (
-              <p className="text-sm text-white/30">No faction data yet.</p>
-            ) : (
-              factionStats.map((stat: any) => (
-                <div key={stat.faction} className="bg-gray-900 rounded p-4 border border-white/10">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      {stat.faction === 'legion' && <Sword className="w-5 h-5 text-red-400" />}
-                      {stat.faction === 'guard' && <Shield className="w-5 h-5 text-blue-400" />}
-                      {stat.faction === 'front' && <Trees className="w-5 h-5 text-green-400" />}
-                      <span className="font-bold capitalize">{stat.faction}</span>
-                    </div>
-                    <span className="text-gold font-mono">{stat.total_points} pts</span>
+            {factionStats.length === 0 ? <p className="text-sm text-white/30">No faction data yet.</p> : factionStats.map((stat: any) => (
+              <div key={stat.faction} className="bg-gray-900 rounded p-4 border border-white/10">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    {stat.faction === 'legion' && <Sword className="w-5 h-5 text-red-400" />}
+                    {stat.faction === 'guard' && <Shield className="w-5 h-5 text-blue-400" />}
+                    {stat.faction === 'front' && <Trees className="w-5 h-5 text-green-400" />}
+                    <span className="font-bold capitalize">{stat.faction}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{stat.total_operatives} operatives</p>
+                  <span className="text-gold font-mono">{stat.total_points} pts</span>
                 </div>
-              ))
-            )}
+                <p className="text-xs text-gray-500 mt-1">{stat.total_operatives} operatives</p>
+              </div>
+            ))}
           </div>
         )}
 
@@ -307,128 +312,70 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 <Package className="w-5 h-5 text-gold" />
                 <h3 className="text-sm font-mono text-gold uppercase">Drop New Crate</h3>
               </div>
-
               <div className="mb-4">
                 <p className="text-xs font-mono text-white/40 mb-2 uppercase">Quick Presets</p>
                 <div className="grid grid-cols-2 gap-2">
                   {CRATE_PRESETS.map(preset => (
-                    <button
-                      key={preset.label}
-                      onClick={() => setCrateForm(preset)}
-                      className={`px-3 py-2 text-xs font-mono border transition-all text-left ${
-                        crateForm.label === preset.label
-                          ? 'border-gold bg-gold/10 text-gold'
-                          : 'border-white/10 text-white/50 hover:border-white/30'
-                      }`}
-                    >
+                    <button key={preset.label} onClick={() => setCrateForm(preset)}
+                      className={`px-3 py-2 text-xs font-mono border transition-all text-left ${crateForm.label === preset.label ? 'border-gold bg-gold/10 text-gold' : 'border-white/10 text-white/50 hover:border-white/30'}`}>
                       {preset.label}
-                      <span className="block text-white/30">
-                        {preset.points_min}–{preset.points_max} pts • {preset.duration_minutes}min
-                      </span>
+                      <span className="block text-white/30">{preset.points_min}–{preset.points_max} pts • {preset.duration_minutes}min</span>
                     </button>
                   ))}
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div className="col-span-2">
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Label</label>
-                  <input
-                    type="text"
-                    value={crateForm.label}
-                    onChange={(e) => setCrateForm({ ...crateForm, label: e.target.value.toUpperCase() })}
-                    className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="text" value={crateForm.label} onChange={(e) => setCrateForm({ ...crateForm, label: e.target.value.toUpperCase() })}
+                    className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Min Points</label>
-                  <input
-                    type="number"
-                    value={crateForm.points_min}
-                    onChange={(e) => setCrateForm({ ...crateForm, points_min: +e.target.value })}
-                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="number" value={crateForm.points_min} onChange={(e) => setCrateForm({ ...crateForm, points_min: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Max Points</label>
-                  <input
-                    type="number"
-                    value={crateForm.points_max}
-                    onChange={(e) => setCrateForm({ ...crateForm, points_max: +e.target.value })}
-                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="number" value={crateForm.points_max} onChange={(e) => setCrateForm({ ...crateForm, points_max: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Duration (min)</label>
-                  <input
-                    type="number"
-                    value={crateForm.duration_minutes}
-                    onChange={(e) => setCrateForm({ ...crateForm, duration_minutes: +e.target.value })}
-                    className="w-full p-2 bg-black border border-white/10 text-white font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="number" value={crateForm.duration_minutes} onChange={(e) => setCrateForm({ ...crateForm, duration_minutes: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-white font-mono focus:border-gold focus:outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Max Claims</label>
-                  <input
-                    type="number"
-                    value={crateForm.max_claims}
-                    onChange={(e) => setCrateForm({ ...crateForm, max_claims: +e.target.value })}
-                    className="w-full p-2 bg-black border border-white/10 text-white font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="number" value={crateForm.max_claims} onChange={(e) => setCrateForm({ ...crateForm, max_claims: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-white font-mono focus:border-gold focus:outline-none" />
                 </div>
               </div>
-
-              {dropSuccess && (
-                <p className="text-green-400 text-sm font-mono mb-3">{dropSuccess}</p>
-              )}
-
-              <button
-                onClick={handleDropCrate}
-                disabled={dropping}
-                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
+              {dropSuccess && <p className="text-green-400 text-sm font-mono mb-3">{dropSuccess}</p>}
+              <button onClick={handleDropCrate} disabled={dropping}
+                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition disabled:opacity-50 flex items-center justify-center gap-2">
                 {dropping ? <>Dropping...</> : <><Zap className="w-4 h-4" /> DROP SUPPLY CRATE</>}
               </button>
             </div>
-
             <div>
               <h3 className="text-sm font-mono text-white/40 uppercase mb-3">Recent Drops</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {crates.length === 0 ? (
-                  <p className="text-sm text-white/20 font-mono">No crates dropped yet.</p>
-                ) : (
-                  crates.map((crate: any) => {
-                    const isActive = crate.active && new Date(crate.expire_time) > new Date();
-                    const remaining = Math.max(0, Math.floor((new Date(crate.expire_time).getTime() - Date.now()) / 60000));
-                    return (
-                      <div key={crate.id} className={`flex items-center justify-between p-3 rounded border ${
-                        isActive ? 'border-gold/30 bg-gold/5' : 'border-white/5 bg-black opacity-50'
-                      }`}>
-                        <div>
-                          <p className="text-sm font-mono font-bold">{crate.label}</p>
-                          <p className="text-xs text-white/40">
-                            {crate.current_claims}/{crate.max_claims} claimed •{' '}
-                            {isActive ? `${remaining}m left` : 'Expired'}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-gold font-mono text-sm">
-                            {crate.min_points}–{crate.max_points}
-                          </span>
-                          {isActive && (
-                            <button
-                              onClick={() => handleDeactivateCrate(crate.id)}
-                              className="text-red-400/60 hover:text-red-400"
-                              title="Deactivate"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
+                {crates.length === 0 ? <p className="text-sm text-white/20 font-mono">No crates dropped yet.</p> : crates.map((crate: any) => {
+                  const isActive = crate.active && new Date(crate.expire_time) > new Date();
+                  const remaining = Math.max(0, Math.floor((new Date(crate.expire_time).getTime() - Date.now()) / 60000));
+                  return (
+                    <div key={crate.id} className={`flex items-center justify-between p-3 rounded border ${isActive ? 'border-gold/30 bg-gold/5' : 'border-white/5 bg-black opacity-50'}`}>
+                      <div>
+                        <p className="text-sm font-mono font-bold">{crate.label}</p>
+                        <p className="text-xs text-white/40">{crate.current_claims}/{crate.max_claims} claimed • {isActive ? `${remaining}m left` : 'Expired'}</p>
                       </div>
-                    );
-                  })
-                )}
+                      <div className="flex items-center gap-3">
+                        <span className="text-gold font-mono text-sm">{crate.min_points}–{crate.max_points}</span>
+                        {isActive && <button onClick={() => handleDeactivateCrate(crate.id)} className="text-red-400/60 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -438,101 +385,143 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         {activeTab === 'classified' && (
           <div className="space-y-6">
             <div className="bg-gray-900 rounded p-6 border border-gold/20">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-3">
                 <FileText className="w-5 h-5 text-gold" />
                 <h3 className="text-sm font-mono text-gold uppercase">Create Classified Code</h3>
               </div>
-              <p className="text-xs text-white/40 mb-4">
-                Create a secret code and hide it somewhere on the site. Players who find it enter it in their dashboard to claim points.
-              </p>
-
+              <p className="text-xs text-white/40 mb-4">Create a secret code and hide it somewhere on the site.</p>
               <div className="space-y-3 mb-4">
                 <div>
-                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">
-                    Secret Code (e.g. PHANTOM-7)
-                  </label>
-                  <input
-                    type="text"
-                    value={intelForm.id}
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Secret Code (e.g. PHANTOM-7)</label>
+                  <input type="text" value={intelForm.id}
                     onChange={(e) => setIntelForm({ ...intelForm, id: e.target.value.toUpperCase().replace(/\s+/g, '-') })}
                     placeholder="PHANTOM-7"
-                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none tracking-widest"
-                  />
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none tracking-widest" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={intelForm.title}
-                    onChange={(e) => setIntelForm({ ...intelForm, title: e.target.value })}
+                  <input type="text" value={intelForm.title} onChange={(e) => setIntelForm({ ...intelForm, title: e.target.value })}
                     placeholder="e.g. Hopper's Secret"
-                    className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none"
-                  />
+                    className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none" />
                 </div>
                 <div>
-                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">
-                    Secret Intel (shown after claiming)
-                  </label>
-                  <textarea
-                    value={intelForm.intel}
-                    onChange={(e) => setIntelForm({ ...intelForm, intel: e.target.value })}
-                    placeholder="The secret lore or intel the player will read after claiming..."
-                    rows={3}
-                    className="w-full p-2 bg-black border border-white/10 text-white text-sm focus:border-gold focus:outline-none resize-none"
-                  />
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Secret Intel</label>
+                  <textarea value={intelForm.intel} onChange={(e) => setIntelForm({ ...intelForm, intel: e.target.value })}
+                    placeholder="The secret lore the player will read after claiming..."
+                    rows={3} className="w-full p-2 bg-black border border-white/10 text-white text-sm focus:border-gold focus:outline-none resize-none" />
                 </div>
                 <div>
                   <label className="text-xs font-mono text-white/40 uppercase block mb-1">Points</label>
-                  <input
-                    type="number"
-                    value={intelForm.points}
-                    onChange={(e) => setIntelForm({ ...intelForm, points: +e.target.value })}
-                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none"
-                  />
+                  <input type="number" value={intelForm.points} onChange={(e) => setIntelForm({ ...intelForm, points: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none" />
                 </div>
               </div>
-
-              {intelSuccess && (
-                <p className={`text-sm font-mono mb-3 ${intelSuccess.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
-                  {intelSuccess}
-                </p>
-              )}
-
-              <button
-                onClick={handleCreateIntel}
-                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition flex items-center justify-center gap-2"
-              >
-                <Plus className="w-4 h-4" /> CREATE CLASSIFIED CODE
+              {intelSuccess && <p className={`text-sm font-mono mb-3 ${intelSuccess.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{intelSuccess}</p>}
+              <button onClick={handleCreateIntel}
+                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> CREATE CODE
               </button>
             </div>
-
-            {/* Existing codes */}
             <div>
               <h3 className="text-sm font-mono text-white/40 uppercase mb-3">Active Codes</h3>
               <div className="space-y-2 max-h-60 overflow-y-auto">
-                {classifiedList.length === 0 ? (
-                  <p className="text-sm text-white/20 font-mono">No codes created yet.</p>
-                ) : (
-                  classifiedList.map((intel: any) => (
-                    <div key={intel.id} className={`flex items-center justify-between p-3 rounded border ${
-                      intel.active ? 'border-gold/30 bg-gold/5' : 'border-white/5 opacity-50'
-                    }`}>
-                      <div>
-                        <p className="text-sm font-mono font-bold text-gold">{intel.id}</p>
-                        <p className="text-xs text-white/60">{intel.title} • +{intel.points} pts</p>
-                      </div>
-                      {intel.active && (
-                        <button
-                          onClick={() => handleDeactivateIntel(intel.id)}
-                          className="text-red-400/60 hover:text-red-400"
-                          title="Deactivate"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                {classifiedList.length === 0 ? <p className="text-sm text-white/20 font-mono">No codes yet.</p> : classifiedList.map((intel: any) => (
+                  <div key={intel.id} className={`flex items-center justify-between p-3 rounded border ${intel.active ? 'border-gold/30 bg-gold/5' : 'border-white/5 opacity-50'}`}>
+                    <div>
+                      <p className="text-sm font-mono font-bold text-gold">{intel.id}</p>
+                      <p className="text-xs text-white/60">{intel.title} • +{intel.points} pts</p>
                     </div>
-                  ))
+                    {intel.active && <button onClick={() => handleDeactivateIntel(intel.id)} className="text-red-400/60 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CHARACTERS */}
+        {activeTab === 'characters' && (
+          <div className="space-y-6">
+            <div className="bg-gray-900 rounded p-6 border border-gold/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Image className="w-5 h-5 text-gold" />
+                <h3 className="text-sm font-mono text-gold uppercase">Add New Character</h3>
+              </div>
+              <p className="text-xs text-white/40 mb-4">
+                Upload the image to Supabase Storage first, then add the filename below (e.g. npc-newchar.jpg).
+              </p>
+              <div className="space-y-3 mb-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-mono text-white/40 uppercase block mb-1">Name</label>
+                    <input type="text" value={charForm.name} onChange={(e) => setCharForm({ ...charForm, name: e.target.value })}
+                      placeholder="Character Name"
+                      className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-white/40 uppercase block mb-1">Role / Title</label>
+                    <input type="text" value={charForm.role} onChange={(e) => setCharForm({ ...charForm, role: e.target.value })}
+                      placeholder="e.g. The Spy"
+                      className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-mono text-white/40 uppercase block mb-1">Type</label>
+                    <select value={charForm.type} onChange={(e) => setCharForm({ ...charForm, type: e.target.value })}
+                      className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none">
+                      <option value="npc">NPC</option>
+                      <option value="faction">Faction Leader</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-mono text-white/40 uppercase block mb-1">Image Filename</label>
+                    <input type="text" value={charForm.image_file} onChange={(e) => setCharForm({ ...charForm, image_file: e.target.value })}
+                      placeholder="npc-newchar.jpg"
+                      className="w-full p-2 bg-black border border-white/10 text-gold text-sm font-mono focus:border-gold focus:outline-none" />
+                  </div>
+                </div>
+                {charForm.image_file && (
+                  <div className="flex items-center gap-3 p-3 bg-black border border-white/10">
+                    <img src={`${IMG}${charForm.image_file}`} alt="preview" className="w-12 h-16 object-cover object-top border border-white/20"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <p className="text-xs text-white/40 font-mono">Image preview</p>
+                  </div>
                 )}
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Description</label>
+                  <textarea value={charForm.description} onChange={(e) => setCharForm({ ...charForm, description: e.target.value })}
+                    placeholder="Full character description..."
+                    rows={3} className="w-full p-2 bg-black border border-white/10 text-white text-sm focus:border-gold focus:outline-none resize-none" />
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Classified Intel (optional)</label>
+                  <textarea value={charForm.intel} onChange={(e) => setCharForm({ ...charForm, intel: e.target.value })}
+                    placeholder="Secret intel revealed when player meets this character..."
+                    rows={2} className="w-full p-2 bg-black border border-white/10 text-white text-sm focus:border-gold focus:outline-none resize-none" />
+                </div>
+              </div>
+              {charSuccess && <p className={`text-sm font-mono mb-3 ${charSuccess.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{charSuccess}</p>}
+              <button onClick={handleCreateCharacter}
+                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> ADD CHARACTER
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-mono text-white/40 uppercase mb-3">Custom Characters ({charactersList.length})</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {charactersList.length === 0 ? <p className="text-sm text-white/20 font-mono">No custom characters yet.</p> : charactersList.map((char: any) => (
+                  <div key={char.id} className={`flex items-center gap-3 p-3 rounded border ${char.active ? 'border-white/10' : 'border-white/5 opacity-50'}`}>
+                    <img src={`${IMG}${char.image_file}`} alt={char.name} className="w-10 h-12 object-cover object-top border border-white/10 flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    <div className="flex-1">
+                      <p className="text-sm font-bold">{char.name}</p>
+                      <p className="text-xs text-white/40">{char.role} • {char.type}</p>
+                    </div>
+                    {char.active && <button onClick={() => handleDeactivateCharacter(char.id)} className="text-red-400/60 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -544,10 +533,7 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             {operatives.slice(0, 50).map((op: any, i: number) => (
               <div key={op.id} className="bg-gray-900 rounded p-3 border border-white/10 flex justify-between items-center">
                 <div>
-                  <p className="font-bold text-sm">
-                    <span className="text-white/30 font-mono mr-2">#{i + 1}</span>
-                    {op.codename}
-                  </p>
+                  <p className="font-bold text-sm"><span className="text-white/30 font-mono mr-2">#{i + 1}</span>{op.codename}</p>
                   <p className="text-xs text-gray-400 font-mono">{op.deployment_code} • {op.faction} • Lvl {op.clearance_level}</p>
                 </div>
                 <span className="text-gold font-mono font-bold">{op.points} pts</span>
@@ -562,35 +548,19 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
             <p className="text-sm text-white/50">Award manual points to any operative.</p>
             <div>
               <label className="text-xs font-mono text-white/40 uppercase block mb-1">Codename or Deployment Code</label>
-              <input
-                type="text"
-                value={awardTarget}
-                onChange={(e) => setAwardTarget(e.target.value)}
+              <input type="text" value={awardTarget} onChange={(e) => setAwardTarget(e.target.value)}
                 placeholder="e.g., GhostKitchen64 or WF-2026-LEG-451"
-                className="w-full p-3 bg-gray-900 border border-white/10 text-white font-mono focus:border-gold focus:outline-none"
-              />
+                className="w-full p-3 bg-gray-900 border border-white/10 text-white font-mono focus:border-gold focus:outline-none" />
             </div>
             <div>
               <label className="text-xs font-mono text-white/40 uppercase block mb-1">Points to Award</label>
-              <input
-                type="number"
-                value={awardPoints}
-                onChange={(e) => setAwardPoints(+e.target.value)}
-                className="w-full p-3 bg-gray-900 border border-white/10 text-gold font-mono focus:border-gold focus:outline-none"
-              />
+              <input type="number" value={awardPoints} onChange={(e) => setAwardPoints(+e.target.value)}
+                className="w-full p-3 bg-gray-900 border border-white/10 text-gold font-mono focus:border-gold focus:outline-none" />
             </div>
-            {awardMsg && (
-              <p className={`text-sm font-mono ${awardMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
-                {awardMsg}
-              </p>
-            )}
-            <button
-              onClick={handleAwardPoints}
-              disabled={!awardTarget.trim()}
-              className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition disabled:opacity-50"
-            >
-              <Trophy className="w-4 h-4 inline mr-2" />
-              AWARD POINTS
+            {awardMsg && <p className={`text-sm font-mono ${awardMsg.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>{awardMsg}</p>}
+            <button onClick={handleAwardPoints} disabled={!awardTarget.trim()}
+              className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition disabled:opacity-50">
+              <Trophy className="w-4 h-4 inline mr-2" />AWARD POINTS
             </button>
           </div>
         )}
