@@ -7,7 +7,6 @@ import { Roles } from "./components/Roles";
 import { Battlefield } from "./components/Battlefield";
 import { Factions } from "./components/Factions";
 import { NPCs } from "./components/NPCs";
-import { Characters } from "./components/Characters";
 import { Scoring } from "./components/Scoring";
 import { FinalPhase } from "./components/FinalPhase";
 import { Operations } from "./components/Operations";
@@ -45,7 +44,6 @@ export default function App() {
         <Battlefield />
         <Factions />
         <NPCs />
-        <Characters />
         <Scoring />
         <FinalPhase />
         <Operations />
