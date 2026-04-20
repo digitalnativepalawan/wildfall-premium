@@ -13,14 +13,11 @@ import { supabase } from "../lib/supabase";
 interface Crate {
   id: string;
   label: string;
-  points_min: number;
-  points_max: number;
-  expires_at: string;
-  claimed_by: string | null;
-  claimed_at: string | null;
-  claimant_codename?: string;
+  min_points: number;
+  max_points: number;
+  expire_time: string;
   max_claims: number;
-  claim_count: number;
+  current_claims: number;
   active: boolean;
 }
 
@@ -54,11 +51,11 @@ function useCountdown(expiresAt: string) {
 }
 
 function CrateCard({ crate, userId, onClaim }: { crate: Crate; userId?: string | null; onClaim: (id: string) => void }) {
-  const { timeLeft, expired } = useCountdown(crate.expires_at);
-  const isFull = crate.claim_count >= crate.max_claims;
+  const { timeLeft, expired } = useCountdown(crate.expire_time);
+  const isFull = crate.current_claims >= crate.max_claims;
   const isUnavailable = expired || isFull || !crate.active;
   const urgency = (() => {
-    const diff = new Date(crate.expires_at).getTime() - Date.now();
+    const diff = new Date(crate.expire_time).getTime() - Date.now();
     if (diff < 60000) return 'critical';
     if (diff < 180000) return 'warning';
     return 'normal';
@@ -81,13 +78,11 @@ function CrateCard({ crate, userId, onClaim }: { crate: Crate; userId?: string |
           : "border-gold/30 bg-black hover:border-gold hover:bg-gold/5"
       )}
     >
-      {/* Urgency pulse */}
       {urgency === 'critical' && !isUnavailable && (
         <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />
       )}
 
       <div className="p-6">
-        {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -104,8 +99,7 @@ function CrateCard({ crate, userId, onClaim }: { crate: Crate; userId?: string |
               )}>{crate.label}</h3>
             </div>
           </div>
-          
-          {/* Timer */}
+
           <div className={cn(
             "text-right font-mono text-sm font-bold",
             expired ? "text-white/20" :
@@ -119,33 +113,27 @@ function CrateCard({ crate, userId, onClaim }: { crate: Crate; userId?: string |
           </div>
         </div>
 
-        {/* Points range */}
         <div className={cn(
           "text-3xl font-mono font-bold mb-4",
           isUnavailable ? "text-white/20" : "text-gold"
         )}>
-          +{crate.points_min}–{crate.points_max}
+          +{crate.min_points}–{crate.max_points}
           <span className="text-sm font-sans font-normal text-white/40 ml-2">pts</span>
         </div>
 
-        {/* Claims bar */}
         <div className="mb-4">
           <div className="flex justify-between text-xs font-mono text-white/30 mb-1">
             <span>CLAIMS</span>
-            <span>{crate.claim_count}/{crate.max_claims}</span>
+            <span>{crate.current_claims}/{crate.max_claims}</span>
           </div>
           <div className="h-1 bg-white/10 rounded-full overflow-hidden">
             <div
-              className={cn(
-                "h-full transition-all duration-500",
-                isFull ? "bg-green-500" : "bg-gold"
-              )}
-              style={{ width: `${(crate.claim_count / crate.max_claims) * 100}%` }}
+              className={cn("h-full transition-all duration-500", isFull ? "bg-green-500" : "bg-gold")}
+              style={{ width: `${(crate.current_claims / crate.max_claims) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* Action */}
         {!userId ? (
           <div className="flex items-center gap-2 text-xs text-white/30 font-mono">
             <Lock className="w-3 h-3" />
@@ -191,13 +179,12 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
 
     if (data) setCrates(data);
 
-    // Also check which ones user has claimed
     if (currentUserId) {
       const { data: claims } = await supabase
         .from('crate_claims')
         .select('crate_id')
         .eq('operative_id', currentUserId);
-      if (claims) setClaimedIds(new Set(claims.map(c => c.crate_id)));
+      if (claims) setClaimedIds(new Set(claims.map((c: any) => c.crate_id)));
     }
 
     setLoading(false);
@@ -205,12 +192,10 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
 
   useEffect(() => {
     fetchCrates();
-    // Poll every 10 seconds for new crates
     const interval = setInterval(fetchCrates, 10000);
     return () => clearInterval(interval);
   }, [fetchCrates]);
 
-  // Realtime subscription for new crates
   useEffect(() => {
     const channel = supabase
       .channel('supply_crates_changes')
@@ -228,32 +213,24 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
     const crate = crates.find(c => c.id === crateId);
     if (!crate) return;
 
-    // Check if expired or full
-    if (new Date(crate.expires_at) < new Date()) return;
-    if (crate.claim_count >= crate.max_claims) return;
+    if (new Date(crate.expire_time) < new Date()) return;
+    if (crate.current_claims >= crate.max_claims) return;
 
-    // Random points in range
     const points = Math.floor(
-      Math.random() * (crate.points_max - crate.points_min + 1) + crate.points_min
+      Math.random() * (crate.max_points - crate.min_points + 1) + crate.min_points
     );
 
-    // Insert claim
     const { error: claimError } = await supabase
       .from('crate_claims')
       .insert([{ crate_id: crateId, operative_id: currentUserId, points_awarded: points }]);
 
-    if (claimError) {
-      // Already claimed or constraint violation
-      return;
-    }
+    if (claimError) return;
 
-    // Increment claim count
     await supabase
       .from('supply_crates')
-      .update({ claim_count: crate.claim_count + 1 })
+      .update({ current_claims: crate.current_claims + 1 })
       .eq('id', crateId);
 
-    // Award points to operative
     const { data: user } = await supabase
       .from('operatives')
       .select('points')
@@ -275,8 +252,8 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
   };
 
   const activeCrates = crates.filter(c => {
-    const notExpired = new Date(c.expires_at) > new Date();
-    return c.active && (notExpired || c.claim_count > 0);
+    const notExpired = new Date(c.expire_time) > new Date();
+    return c.active && (notExpired || c.current_claims > 0);
   });
 
   if (loading) return null;
@@ -285,7 +262,6 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
   return (
     <section className="py-16 bg-black border-t border-white/5">
       <div className="max-w-6xl mx-auto px-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Package className="w-5 h-5 text-gold" />
@@ -302,7 +278,6 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
           </div>
         </div>
 
-        {/* Flash notification */}
         <AnimatePresence>
           {flash && (
             <motion.div
@@ -319,18 +294,17 @@ export function SupplyCrates({ currentUserId, onPointsEarned }: SupplyCratesProp
           )}
         </AnimatePresence>
 
-        {/* Crates grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <AnimatePresence>
             {activeCrates.map(crate => {
               const alreadyClaimed = claimedIds.has(crate.id);
-              const crateWithClaimed = alreadyClaimed
-                ? { ...crate, claim_count: Math.max(crate.claim_count, 1) }
+              const crateDisplay = alreadyClaimed
+                ? { ...crate, current_claims: Math.max(crate.current_claims, 1) }
                 : crate;
               return (
                 <CrateCard
                   key={crate.id}
-                  crate={crateWithClaimed}
+                  crate={crateDisplay}
                   userId={currentUserId}
                   onClaim={alreadyClaimed ? () => {} : handleClaim}
                 />
