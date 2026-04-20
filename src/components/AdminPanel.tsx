@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Shield, Users, Trophy, Package, Sword, Trees, Zap, Trash2, RefreshCw } from "lucide-react";
+import { Shield, Users, Trophy, Package, Sword, Trees, Zap, Trash2, RefreshCw, FileText, Plus } from "lucide-react";
 import { Modal } from "./Modal";
 
 const ADMIN_PASSWORD = "5309";
@@ -27,6 +27,20 @@ const CRATE_PRESETS = [
   { label: "GOLDEN CRATE", points_min: 100, points_max: 200, duration_minutes: 5, max_claims: 1 },
 ];
 
+interface IntelForm {
+  id: string;
+  title: string;
+  intel: string;
+  points: number;
+}
+
+const DEFAULT_INTEL_FORM: IntelForm = {
+  id: '',
+  title: '',
+  intel: '',
+  points: 25,
+};
+
 export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,9 +48,12 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   const [operatives, setOperatives] = useState<any[]>([]);
   const [factionStats, setFactionStats] = useState<any[]>([]);
   const [crates, setCrates] = useState<any[]>([]);
+  const [classifiedList, setClassifiedList] = useState<any[]>([]);
   const [crateForm, setCrateForm] = useState<CrateForm>(DEFAULT_CRATE_FORM);
+  const [intelForm, setIntelForm] = useState<IntelForm>(DEFAULT_INTEL_FORM);
   const [dropping, setDropping] = useState(false);
   const [dropSuccess, setDropSuccess] = useState('');
+  const [intelSuccess, setIntelSuccess] = useState('');
   const [awardTarget, setAwardTarget] = useState('');
   const [awardPoints, setAwardPoints] = useState(10);
   const [awardMsg, setAwardMsg] = useState('');
@@ -45,15 +62,17 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     if (!isAuthenticated) return;
     const { supabase } = await import("../lib/supabase");
 
-    const [opsRes, statsRes, cratesRes] = await Promise.all([
+    const [opsRes, statsRes, cratesRes, intelRes] = await Promise.all([
       supabase.from('operatives').select('*').order('points', { ascending: false }),
       supabase.from('faction_stats').select('*'),
       supabase.from('supply_crates').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('classified_intel').select('*').order('created_at', { ascending: false }),
     ]);
 
     if (opsRes.data) setOperatives(opsRes.data);
     if (statsRes.data) setFactionStats(statsRes.data);
     if (cratesRes.data) setCrates(cratesRes.data);
+    if (intelRes.data) setClassifiedList(intelRes.data);
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -118,6 +137,40 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
     fetchData();
   };
 
+  const handleCreateIntel = async () => {
+    if (!intelForm.id || !intelForm.title || !intelForm.intel) {
+      setIntelSuccess('Fill in all fields.');
+      return;
+    }
+
+    const { supabase } = await import("../lib/supabase");
+
+    const code = intelForm.id.toUpperCase().replace(/\s+/g, '-');
+
+    const { error } = await supabase.from('classified_intel').insert([{
+      id: code,
+      title: intelForm.title,
+      intel: intelForm.intel,
+      points: intelForm.points,
+      active: true,
+    }]);
+
+    if (error) {
+      setIntelSuccess('Error: ' + error.message);
+    } else {
+      setIntelSuccess(`✓ Code "${code}" created! Hide it somewhere on the site.`);
+      setIntelForm(DEFAULT_INTEL_FORM);
+      fetchData();
+      setTimeout(() => setIntelSuccess(''), 6000);
+    }
+  };
+
+  const handleDeactivateIntel = async (id: string) => {
+    const { supabase } = await import("../lib/supabase");
+    await supabase.from('classified_intel').update({ active: false }).eq('id', id);
+    fetchData();
+  };
+
   const handleAwardPoints = async () => {
     if (!awardTarget.trim() || !awardPoints) return;
     const { supabase } = await import("../lib/supabase");
@@ -165,10 +218,12 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
   const totalPlayers = operatives.length;
   const totalPoints = operatives.reduce((sum, o) => sum + o.points, 0);
   const activeCrates = crates.filter(c => c.active && new Date(c.expire_time) > new Date());
+  const activeIntel = classifiedList.filter(i => i.active);
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'crates', label: `Supply Drops ${activeCrates.length > 0 ? `(${activeCrates.length})` : ''}` },
+    { id: 'classified', label: `Classified ${activeIntel.length > 0 ? `(${activeIntel.length})` : ''}` },
     { id: 'players', label: 'Players' },
     { id: 'award', label: 'Award Points' },
   ];
@@ -373,6 +428,110 @@ export function AdminPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                       </div>
                     );
                   })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CLASSIFIED INTEL */}
+        {activeTab === 'classified' && (
+          <div className="space-y-6">
+            <div className="bg-gray-900 rounded p-6 border border-gold/20">
+              <div className="flex items-center gap-2 mb-4">
+                <FileText className="w-5 h-5 text-gold" />
+                <h3 className="text-sm font-mono text-gold uppercase">Create Classified Code</h3>
+              </div>
+              <p className="text-xs text-white/40 mb-4">
+                Create a secret code and hide it somewhere on the site. Players who find it enter it in their dashboard to claim points.
+              </p>
+
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">
+                    Secret Code (e.g. PHANTOM-7)
+                  </label>
+                  <input
+                    type="text"
+                    value={intelForm.id}
+                    onChange={(e) => setIntelForm({ ...intelForm, id: e.target.value.toUpperCase().replace(/\s+/g, '-') })}
+                    placeholder="PHANTOM-7"
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none tracking-widest"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={intelForm.title}
+                    onChange={(e) => setIntelForm({ ...intelForm, title: e.target.value })}
+                    placeholder="e.g. Hopper's Secret"
+                    className="w-full p-2 bg-black border border-white/10 text-white text-sm font-mono focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">
+                    Secret Intel (shown after claiming)
+                  </label>
+                  <textarea
+                    value={intelForm.intel}
+                    onChange={(e) => setIntelForm({ ...intelForm, intel: e.target.value })}
+                    placeholder="The secret lore or intel the player will read after claiming..."
+                    rows={3}
+                    className="w-full p-2 bg-black border border-white/10 text-white text-sm focus:border-gold focus:outline-none resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-mono text-white/40 uppercase block mb-1">Points</label>
+                  <input
+                    type="number"
+                    value={intelForm.points}
+                    onChange={(e) => setIntelForm({ ...intelForm, points: +e.target.value })}
+                    className="w-full p-2 bg-black border border-white/10 text-gold font-mono focus:border-gold focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {intelSuccess && (
+                <p className={`text-sm font-mono mb-3 ${intelSuccess.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}>
+                  {intelSuccess}
+                </p>
+              )}
+
+              <button
+                onClick={handleCreateIntel}
+                className="w-full py-3 bg-gold text-black font-bold font-mono tracking-widest hover:bg-gold/80 transition flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> CREATE CLASSIFIED CODE
+              </button>
+            </div>
+
+            {/* Existing codes */}
+            <div>
+              <h3 className="text-sm font-mono text-white/40 uppercase mb-3">Active Codes</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {classifiedList.length === 0 ? (
+                  <p className="text-sm text-white/20 font-mono">No codes created yet.</p>
+                ) : (
+                  classifiedList.map((intel: any) => (
+                    <div key={intel.id} className={`flex items-center justify-between p-3 rounded border ${
+                      intel.active ? 'border-gold/30 bg-gold/5' : 'border-white/5 opacity-50'
+                    }`}>
+                      <div>
+                        <p className="text-sm font-mono font-bold text-gold">{intel.id}</p>
+                        <p className="text-xs text-white/60">{intel.title} • +{intel.points} pts</p>
+                      </div>
+                      {intel.active && (
+                        <button
+                          onClick={() => handleDeactivateIntel(intel.id)}
+                          className="text-red-400/60 hover:text-red-400"
+                          title="Deactivate"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             </div>
